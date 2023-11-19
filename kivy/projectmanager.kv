@@ -1,0 +1,202 @@
+<MyLayout>:
+    projects_grid: kv_projects_grid
+    do_default_tab: False
+    TabbedPanelItem:
+        text: "Projects"
+        FloatLayout:
+            Label:
+                size_hint: 0.25,0.15
+                pos_hint: {"x":0.0575,"top":1}
+                bold: True
+                text: "Recent Projects:"
+                font_size: 35
+            Button:
+                text: "Create Project"
+                size_hint: 0.25, 0.075
+                pos_hint: {"x":0.725,"top":0.9625}
+                font_size: 25
+                on_press: root.OpenProjectDialog()
+            ScrollView:
+                size_hint: 1, 0.85
+                pos_hint: {"top": 0.85}
+                GridLayout:
+                    cols: 1
+                    height: self.minimum_height
+                    id: kv_projects_grid
+                    spacing: 10
+                    size_hint_y: None
+                    
+              
+    TabbedPanelItem:
+        text: "About"
+        Label:
+            text: "Artix-Engine is an opensource game engine developed by Marius Angermann."
+    TabbedPanelItem:
+        text: "Settings"
+        Label:
+            text: "Modify the settings to customize Artix-Engine."
+
+<ProjectDialog>:
+    #Global Variables
+    dirpath: kv_dirpath
+    prcname: kv_prcname
+    backup_switch: kv_backup_switch
+
+    auto_dismiss: False
+    title: "Create Project"
+    size_hint: 0.8,0.35
+
+    GridLayout:
+        cols: 2
+        Label:
+            text: "Project Name:"
+        TextInput:
+            id: kv_prcname
+            multiline: False
+            font_size:20
+        Label:
+            text: "Project Location:"
+        BoxLayout:
+            TextInput:
+                id: kv_dirpath
+                multiline: False
+                readonly: True
+            Button:
+                text: "Choose"
+                on_release: root.choose_dir()
+                
+        Label:
+            text: "Create Project Backup: "
+        Switch:
+            id: kv_backup_switch
+        Button:
+            text: "Cancel"
+            on_press: root.dismiss()
+        Button:
+            text: "Create"
+            on_press: root.create_project()
+
+<WarningDialog>:
+    warninglabel: kv_warninglabel    
+
+    title: "Warning"
+    size_hint: 0.42,0.3
+    auto_dismiss: False
+    GridLayout:
+        cols: 1
+        Label:
+            id: kv_warninglabel
+            text: "This is a warning!"
+        Button:
+            text: "Close"
+            on_press: root.dismiss()
+
+<YesNoDialog>:
+    warninglabel: kv_warninglabel
+
+    title: "Warning"
+    size_hint: 0.42,0.3
+    auto_dismiss: False
+    GridLayout:
+        cols: 1
+        Label:
+            id: kv_warninglabel
+            text: "This is a warning!"
+        GridLayout:
+            cols: 2
+            Button:
+                text: "No"
+                on_press: root.dismiss()
+            Button:
+                text: "Yes"
+                on_press: root.yes()
+
+<LoadingDialog>:
+    loadinglabel: kv_loadinglabel
+    progressbar: kv_progressbar
+
+    title: "Loading"
+    size_hint: 0.42,0.3
+    auto_dismiss: False
+    GridLayout:
+        cols: 1
+        Label:
+            id: kv_loadinglabel
+            text: "Loading Data!"
+        ProgressBar:
+            id: kv_progressbar
+            max:100
+            value:0
+
+<ProjectLayout>:
+    open_button: kv_open_button
+    project_name: kv_project_name
+    project_directory: kv_project_dir
+    canvas.before:
+        Color:
+            rgba: 36/255,36/255,36/255,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    size_hint_y: None
+    height: 85
+    background:
+    TextInput:
+        id: kv_project_name
+        multiline: False
+        line_height: 1
+        foreground_color: 1,1,1,1
+        background_color: 36/255,36/255,36/255,1
+        background_normal: "kivy/img/white.png"
+        background_active: "kivy/img/white.png"
+        readonly: True
+        text: "Default_Project_01"
+        size_hint: 0.5,0.7
+        pos_hint: {"top":1}
+        font_size: 25
+        bold: True
+        padding_y: [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
+    TextInput:
+        id: kv_project_dir
+        multiline: False
+        line_height: 1
+        foreground_color: 1,1,1,1
+        background_color: 30/255,30/255,30/255,1
+        background_normal: "kivy/img/white.png"
+        background_active: "kivy/img/white.png"
+        readonly: True
+        text: "C:\\Users\\Marius Angermann\\Downloads\\Default_Project_01"
+        size_hint: 0.5,0.3
+        pos_hint: {"top":0.3}
+        #font_size: 25
+        padding_y: [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
+    Button:
+        id: kv_open_button
+        text: "Open"
+        font_size: 22
+        size_hint: 0.15,0.7
+        pos_hint: {"x":0.75,"top":0.85}
+        on_press: root.open_project()
+    Button:
+        size_hint: 0.075,0.75
+        background_normal: "kivy/img/dots.png"
+        background_down: "kivy/img/dots_down.png"
+        pos_hint: {"x":0.91,"top":0.875}
+        on_release: root.open_dropdown_menu()
+    
+<DropDownMenu>:
+    title: "This is a DropDown"
+    auto_dismiss: True
+    size_hint: 0.5,0.4
+    BoxLayout:
+        orientation: "vertical"
+        spacing: 5
+        Button:
+            text: "Open project settings"
+            on_press: root.select_option("prc_settings")
+        Button:
+            text: "Remove project from list"
+            on_press: root.select_option("prc_remove")
+        Button:
+            text: "Delete project"
+            on_press: root.select_option("prc_delete")
