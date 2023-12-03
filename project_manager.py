@@ -186,13 +186,10 @@ class ProjectLayout(FloatLayout):
                 self.panel_link.DeleteProject(self.project_name.text)
         self.panel_link.UpdateProjectList()
         self.panel_link.UpdateProjectMenu()
-    def run_editor_thread(self):
-        thread = threading.Thread(target=self.open_project)
-        thread.start()
+
 
     def open_project(self):
-        import editor
-
+        pass
         
     
 

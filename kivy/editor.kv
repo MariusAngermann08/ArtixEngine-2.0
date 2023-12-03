@@ -1,0 +1,255 @@
+
+<MyLayout>:
+    file_manager_list: kv_file_manager_list
+    file_manager_icon: kv_file_manager_icon
+    viewport_layout: kv_viewport_layout
+    id: layout
+
+    TabbedPanel:
+        do_default_tab: False
+        size_hint: 0.60, 0.69
+        pos_hint: {"x": 0.20, "y": 0.28}
+        tab_width: 150
+
+        TabbedPanelItem:
+            text: "Viewport"
+            font_size: 20
+            FloatLayout:
+                id: kv_viewport_layout
+                canvas.before:
+                    Color:
+                        rgba: 255/255,255/255,255/255,1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+              
+                
+                
+        TabbedPanelItem:
+            text: "Scripting"
+            font_size: 20
+            FloatLayout:
+                cols: 1
+                ScrollView:
+                    size_hint: 0.3, 1
+                    pos_hint: {"x": 0}
+                    GridLayout:
+                        cols: 1
+                        height: self.minimum_height
+                        spacing: 10
+                        Button:
+                            text:"PlayerScript.py"
+                            size_hint_y: None
+                            height: 50     
+                CodeInput:
+                    font_size: 20
+                    size_hint: 0.7, 10
+                    pos_hint: {"x": 0.3}
+        TabbedPanelItem:
+            text: "Documentation"
+            font_size: 20
+            GridLayout:
+                cols: 1
+                Label:
+                    text: "A easy way to access the documentation while working on your game."
+
+
+    #File Manager List View
+    GridLayout:
+        canvas.before:
+            Color:
+                rgba: 36/255,36/255,36/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        size_hint: 0.20,0.23
+        pos_hint: {"x": 0}
+        cols: 1
+        FileChooserListView:
+            id: kv_file_manager_list
+            size_hint: 0.20,0.23
+            pos_hint: {"x": 0}
+
+    #File Manager Menu Bar
+    FloatLayout:
+        canvas.before:
+            Color:
+                rgba: 25/255,25/255,25/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        size_hint: 0.60,0.05
+        pos_hint: {"x": 0.20, "y": 0.23}
+        Button:
+            size_hint: 0.15, 1
+            pos_hint: {"x": 0, "y": 0}
+            text: "Add"
+            font_size: 20
+            on_release: kv_fm_add_menu.show(*app.root_window.mouse_pos)
+
+    #File Manager Icon View
+    GridLayout:
+        canvas.before:
+            Color:
+                rgba: 36/255,36/255,36/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        size_hint: 0.60,0.23
+        cols: 1
+        pos_hint: {"x": 0.20}
+        FileChooserIconView:
+            id: kv_file_manager_icon
+            pos_hint: {"x": 0.20}
+            size_hint: 0.60,0.23
+
+    ContextMenu:
+        id: kv_fm_add_menu
+        visible: False
+        cancel_handler_widget: layout
+
+        ContextMenuTextItem:
+            font_size: 20
+            text: "Import"
+        ContextMenuDivider:
+        ContextMenuTextItem:
+            text: "New"
+            font_size: 20
+            ContextMenu:
+                ContextMenuTextItem:
+                    text: "Event System"
+                    font_size: 20
+                ContextMenuTextItem:
+                    text: "Python File(.py)"
+                    font_size: 20
+    
+    #Properties Panel
+    ScrollView:
+        size_hint: 0.20,0.88
+        pos_hint: {"x": 0.80}
+        canvas.before:
+            Color:
+                rgba: 36/255,36/255,36/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        GridLayout:
+            cols: 1
+            height: self.minimum_height
+            spacing: 10
+            Button:
+                text: "Property 1"
+                size_hint_y: None
+                height: 85
+            Button:
+                text: "Property 2"
+                size_hint_y: None
+                height: 85
+            Button:
+                text: "Property 3"
+                size_hint_y: None
+                height: 85
+
+    #Scene Tree
+    ScrollView:
+        size_hint: 0.20,0.65
+        pos_hint: {"top": 0.87}
+        canvas.before:
+            Color:
+                rgba: 36/255,36/255,36/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        GridLayout:
+            cols: 1
+            height: self.minimum_height
+            spacing: 10
+            Button:
+                text: "Property 1"
+                size_hint_y: None
+                height: 85
+            Button:
+                text: "Property 2"
+                size_hint_y: None
+                height: 85
+            Button:
+                text: "Property 3"
+                size_hint_y: None
+                height: 85
+
+    
+
+            
+    AppMenu:
+        id: app_menu
+        top: root.height
+        cancel_handler_widget: layout
+
+        AppMenuTextItem:
+            text: "File"
+            ContextMenu:
+                ContextMenuTextItem:
+                    text: "New Scene"
+                ContextMenuTextItem:
+                    text: "Open Scene"
+                ContextMenuDivider:
+                ContextMenuTextItem:
+                    text: "Save"
+                ContextMenuTextItem:
+                    text: "Save As"
+                ContextMenuTextItem:
+                    text: "Editor Settings"
+                ContextMenuDivider:
+                ContextMenuTextItem:
+                    text: "Exit"
+        AppMenuTextItem:
+            text: "Edit"
+            ContextMenu:
+                ContextMenuTextItem:
+                    text: "Undo"
+                ContextMenuTextItem:
+                    text: "Redo"
+                ContextMenuDivider:
+                ContextMenuTextItem:
+                    text: "Project Settings"
+        AppMenuTextItem:
+            text: "View"
+            ContextMenu:
+                ContextMenuTextItem:
+                    text: "Load Language"
+                    ContextMenu:
+                        ContextMenuTextItem:
+                            text: "English"
+                        ContextMenuTextItem:
+                            text: "Deutsch"
+                ContextMenuDivider:
+                ContextMenuTextItem:
+                    text: "Toggle Complex View"
+                ContextMenuTextItem:
+                    text: "Toggle Simple View"
+                # ...
+        AppMenuTextItem:
+            text: "Selection"
+            ContextMenu:
+                ContextMenuTextItem:
+                    text: "Clear Selection"
+                ContextMenuDivider:
+                ContextMenuTextItem:
+                    text: "Copy"
+                ContextMenuTextItem:
+                    text: "Paste"
+                ContextMenuTextItem:
+                    text: "Cut"
+        AppMenuTextItem:
+            text: "Export"
+            ContextMenu:
+                ContextMenuTextItem:
+                    text: "Export Settings"
+                ContextMenuDivider:
+                ContextMenuTextItem:
+                    text: "Export As"
+                    ContextMenu:
+                        ContextMenuTextItem:
+                            text: "Executable(.exe)"
+                        ContextMenuTextItem:
+                            text: "Source Code(.py)"
