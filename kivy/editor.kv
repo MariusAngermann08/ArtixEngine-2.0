@@ -1,5 +1,8 @@
 <RoundedButton@Button>:
     background_color: 0,0,0,0  # the last zero is the critical on, make invisible
+    text: "Empty"
+    size_hint_y: None
+    height: 45
     canvas.before:
         Color:
             rgba: (.4,.4,.4,1) if self.state=='normal' else (0,.7,.7,1)  # visual feedback of press
@@ -8,9 +11,17 @@
             size: self.size
             radius: [30,]
 
+<DefaultButton>:
+    text: "Empty"
+    size_hint_y: None
+    height: 60
+
+
 <MyLayout>:
     viewport_layout: kv_viewport_layout
     scenetree_layout: kv_scenetree_layout
+    scenelist_layout: kv_scenelist_layout
+    scene_name_label: kv_scene_name_label
     id: layout
 
     TabbedPanel:
@@ -88,37 +99,15 @@
                 pos: self.pos
                 size: self.size
         GridLayout:
+            id: kv_scenelist_layout
             #size_hint: 0.8,1
             #pos_hint: {"x":0.2,"y":0}
             cols: 1
             height: self.minimum_height
             spacing: 20
             size_hint_y: None
-            RoundedButton:
-                #background_color: 0,0,1,1
-                text: "Level01"
-                size_hint_y: None
-                height: 60
-            RoundedButton:
-                #background_color: 0,0,1,1
-                text: "Level01"
-                size_hint_y: None
-                height: 60
-            RoundedButton:
-                #background_color: 0,0,1,1
-                text: "Level01"
-                size_hint_y: None
-                height: 60
-            RoundedButton:
-                #background_color: 0,0,1,1
-                text: "Level01"
-                size_hint_y: None
-                height: 60
-            RoundedButton:
-                #background_color: 0,0,1,1
-                text: "Level01"
-                size_hint_y: None
-                height: 60
+                
+
     
         
 
@@ -198,6 +187,34 @@
                 text: "Property 3"
                 size_hint_y: None
                 height: 85
+    
+
+    
+    #SceneTree Headmenu
+    FloatLayout:
+        canvas.before:
+            Color:
+                rgba: 25/255,25/255,25/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        size_hint: 0.20,0.075
+        pos_hint: {"x": 0, "y": 0.9}
+        Label:
+            text: "Scene Name"
+            id: kv_scene_name_label
+            pos_hint: {"x": 0, "y": 0}
+            size_hint: 0.5,1
+            font_size: 25
+        Button:
+            background_color: 95/255,148/255,103/255,1
+            text: "+"
+            pos_hint: {"x": 0.75, "y": 0.05}
+            size_hint: 0.2,0.8
+            font_size: 25
+
+
+
 
     #Scene Tree
     ScrollView:
@@ -215,10 +232,6 @@
             height: self.minimum_height
             size_hint_y: None
             spacing: 10
-            Button:
-                text: "Object1"
-                size_hint_y: None
-                height: 60
             
 
     

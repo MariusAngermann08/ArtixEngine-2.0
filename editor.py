@@ -51,9 +51,7 @@ project_data_example = {
     }
 }
 
-untitled_scene_example = {
-    
-}
+
 
 
 
@@ -62,10 +60,19 @@ project_data = {}
 temp_scene_name = "Untitled"
 temp_scene = {}
 
+class RoundedButton(Button):
+    def __init__(self, **kwargs):
+        super(RoundedButton, self).__init__(**kwargs)
+
+class DefaultButton(Button):
+    def __init__(self, **kwargs):
+        super(DefaultButton, self).__init__(**kwargs)
 
 class MyLayout(FloatLayout):
     scenetree_layout = ObjectProperty()
     viewport_layout = ObjectProperty()
+    scenelist_layout = ObjectProperty()
+    scene_name_label = ObjectProperty()
 
     def __init__(self, **kwargs):
         super(MyLayout, self).__init__(**kwargs)
@@ -75,6 +82,8 @@ class MyLayout(FloatLayout):
             self.rect.pos = (1000,500)
 
     def load_project(self, name, path):
+        self.scenetree_layout.clear_widgets()
+        self.scenelist_layout.clear_widgets()
         #Checking for project existance and setting paths
         if os.path.exists(f"{path}\\project.json"):
             self.prc_path = path
@@ -102,6 +111,19 @@ class MyLayout(FloatLayout):
             print("[READING PROJECT]")
             print(project_data)
 
+            #Adding all loaded scenes to the scene list
+            widgets = []
+            for scene in project_data:
+                instance = RoundedButton()
+                instance.text = scene
+                widgets.append(instance)
+                instance = None
+            
+            for widget in widgets:
+                self.scenelist_layout.add_widget(widget)
+            widgets.clear()
+
+
             if len(project_data) == 0:
                 pass
             else:
@@ -110,7 +132,7 @@ class MyLayout(FloatLayout):
                     target = scene
                     break
 
-                self.load_scene(project_data[target])
+                self.load_scene(target)
 
     def save_project(self):
         #Converting data/scene/[objects] to list
@@ -135,7 +157,24 @@ class MyLayout(FloatLayout):
                     json.dump(project_data[scene][obj], file)
     
     def load_scene(self, name):
-        pass
+        if name in project_data:
+            temp_scene = project_data[name]
+            temp_scene_name = name
+            
+            #Adding objects of scene to scenetree
+            widgets = []
+            for obj in temp_scene:
+                instance = DefaultButton()
+                instance.text = obj
+                widgets.append(instance)
+                instance = None
+            for widget in widgets:
+                self.scenetree_layout.add_widget(widget)
+            widgets.clear()
+                
+
+        else:
+            print(f"[ERROR] Scene <{name}> doesnt exist")
 
 
 
