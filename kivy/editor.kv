@@ -1,8 +1,16 @@
+<RoundedButton@Button>:
+    background_color: 0,0,0,0  # the last zero is the critical on, make invisible
+    canvas.before:
+        Color:
+            rgba: (.4,.4,.4,1) if self.state=='normal' else (0,.7,.7,1)  # visual feedback of press
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [30,]
 
 <MyLayout>:
-    file_manager_list: kv_file_manager_list
-    file_manager_icon: kv_file_manager_icon
     viewport_layout: kv_viewport_layout
+    scenetree_layout: kv_scenetree_layout
     id: layout
 
     TabbedPanel:
@@ -37,6 +45,7 @@
                         cols: 1
                         height: self.minimum_height
                         spacing: 10
+                        size_hint_y: None
                         Button:
                             text:"PlayerScript.py"
                             size_hint_y: None
@@ -44,7 +53,7 @@
                 CodeInput:
                     font_size: 20
                     size_hint: 0.7, 10
-                    pos_hint: {"x": 0.3}
+                    pos_hint: {"x": 0.3, "y": 0}
         TabbedPanelItem:
             text: "Documentation"
             font_size: 20
@@ -53,22 +62,65 @@
                 Label:
                     text: "A easy way to access the documentation while working on your game."
 
+    FloatLayout:
+        canvas.before:
+            Color:
+                rgba: 25/255,25/255,25/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        size_hint: 0.20,0.05
+        pos_hint: {"x": 0, "y": 0.28}
+        Label:
+            text: "Scenes"
+            pos_hint: {"x": 0, "y": 0}
+            size_hint: 1,1
+            font_size: 25
 
-    #File Manager List View
-    GridLayout:
+    #Scene List
+    ScrollView:
+        size_hint: 0.20,0.28
+        pos_hint: {"x": 0, "y":0}
         canvas.before:
             Color:
                 rgba: 36/255,36/255,36/255,1
             Rectangle:
                 pos: self.pos
                 size: self.size
-        size_hint: 0.20,0.23
-        pos_hint: {"x": 0}
-        cols: 1
-        FileChooserListView:
-            id: kv_file_manager_list
-            size_hint: 0.20,0.23
-            pos_hint: {"x": 0}
+        GridLayout:
+            #size_hint: 0.8,1
+            #pos_hint: {"x":0.2,"y":0}
+            cols: 1
+            height: self.minimum_height
+            spacing: 20
+            size_hint_y: None
+            RoundedButton:
+                #background_color: 0,0,1,1
+                text: "Level01"
+                size_hint_y: None
+                height: 60
+            RoundedButton:
+                #background_color: 0,0,1,1
+                text: "Level01"
+                size_hint_y: None
+                height: 60
+            RoundedButton:
+                #background_color: 0,0,1,1
+                text: "Level01"
+                size_hint_y: None
+                height: 60
+            RoundedButton:
+                #background_color: 0,0,1,1
+                text: "Level01"
+                size_hint_y: None
+                height: 60
+            RoundedButton:
+                #background_color: 0,0,1,1
+                text: "Level01"
+                size_hint_y: None
+                height: 60
+    
+        
 
     #File Manager Menu Bar
     FloatLayout:
@@ -87,21 +139,17 @@
             font_size: 20
             on_release: kv_fm_add_menu.show(*app.root_window.mouse_pos)
 
-    #File Manager Icon View
+    #File Manager
     GridLayout:
         canvas.before:
             Color:
-                rgba: 36/255,36/255,36/255,1
+                rgba: 1,0,0,1
             Rectangle:
                 pos: self.pos
                 size: self.size
         size_hint: 0.60,0.23
         cols: 1
         pos_hint: {"x": 0.20}
-        FileChooserIconView:
-            id: kv_file_manager_icon
-            pos_hint: {"x": 0.20}
-            size_hint: 0.60,0.23
 
     ContextMenu:
         id: kv_fm_add_menu
@@ -125,7 +173,7 @@
     
     #Properties Panel
     ScrollView:
-        size_hint: 0.20,0.88
+        size_hint: 0.20,0.9
         pos_hint: {"x": 0.80}
         canvas.before:
             Color:
@@ -137,6 +185,7 @@
             cols: 1
             height: self.minimum_height
             spacing: 10
+            size_hint_y: None
             Button:
                 text: "Property 1"
                 size_hint_y: None
@@ -152,8 +201,8 @@
 
     #Scene Tree
     ScrollView:
-        size_hint: 0.20,0.65
-        pos_hint: {"top": 0.87}
+        size_hint: 0.20,0.57
+        pos_hint: {"y": 0.33}
         canvas.before:
             Color:
                 rgba: 36/255,36/255,36/255,1
@@ -161,21 +210,16 @@
                 pos: self.pos
                 size: self.size
         GridLayout:
+            id: kv_scenetree_layout
             cols: 1
             height: self.minimum_height
+            size_hint_y: None
             spacing: 10
             Button:
-                text: "Property 1"
+                text: "Object1"
                 size_hint_y: None
-                height: 85
-            Button:
-                text: "Property 2"
-                size_hint_y: None
-                height: 85
-            Button:
-                text: "Property 3"
-                size_hint_y: None
-                height: 85
+                height: 60
+            
 
     
 

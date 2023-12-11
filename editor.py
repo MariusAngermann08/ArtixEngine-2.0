@@ -36,12 +36,35 @@ import json
 script_dir = os.path.dirname(os.path.realpath(__file__))
 Builder.load_file("kivy/editor.kv")
 
+prc_name = ""
+
+if len(sys.argv) > 1:
+    prc_name = sys.argv[1]
+else: prc_name = "ExampleProject" #sys.exit()
+
+
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
+
+project_data_example = {
+    "Scene1": {
+        "player": {"position": [10,10]}
+    }
+}
+
+untitled_scene_example = {
+    
+}
+
+
+
+project_data = {}
+
+temp_scene_name = "Untitled"
+temp_scene = {}
 
 
 class MyLayout(FloatLayout):
-    file_manager_list = ObjectProperty()
-    file_manager_icon = ObjectProperty()
+    scenetree_layout = ObjectProperty()
     viewport_layout = ObjectProperty()
 
     def __init__(self, **kwargs):
@@ -50,7 +73,69 @@ class MyLayout(FloatLayout):
             Color(1,0,0,.5, mode="rgba")
             self.rect = Rectangle(pos=(0,0), size=(100,100))
             self.rect.pos = (1000,500)
+
+    def load_project(self, name, path):
+        #Checking for project existance and setting paths
+        if os.path.exists(f"{path}\\project.json"):
+            self.prc_path = path
+            self.prc_name = name
+        else:
+            print(f"[ERROR] The Project {self.prc_name} doesn't exist at {self.prc_path}.")
+            sys.exit()
+        
+        #Only continues if project exists
+        scenes = {}
+        objects = {}
+
+        #Transforming all project files into 1 dictionary
+        with open(f"{self.prc_path}\\Scenes\\scenes.json", "r") as file:
+            data = json.load(file)
+            for i in data:
+                project_data[i] = {}
+                for obj in data[i]:
+                    project_data[i][obj] = {}
+                    with open(f"{self.prc_path}\\Scenes\\{i}\\{obj}_config.json", "r") as obj_file:
+                        obj_data = json.load(obj_file)
+                        for key in obj_data:
+                            project_data[i][obj][key] = obj_data[key]
+
+            print("[READING PROJECT]")
+            print(project_data)
+
+            if len(project_data) == 0:
+                pass
+            else:
+                target = ""
+                for scene in project_data:
+                    target = scene
+                    break
+
+                self.load_scene(project_data[target])
+
+    def save_project(self):
+        #Converting data/scene/[objects] to list
+        scenefile_structure = {}
+        for scene in project_data:
+            objlist = []
+            for element in project_data[scene]:
+                objlist.append(element)
+            scenefile_structure[scene] = objlist
+
+        print("[SAVING PROJECT]")
+        print(scenefile_structure)
+
+        #Writing list into scenes.json file
+        with open(f"{self.prc_path}\\Scenes\\scenes.json", "w") as file:
+            json.dump(scenefile_structure, file)
+
+        #Writing objects data into their config files
+        for scene in project_data:
+            for obj in project_data[scene]:
+                with open(f"{self.prc_path}\\Scenes\\{scene}\\{obj}_config.json", "w") as file:
+                    json.dump(project_data[scene][obj], file)
     
+    def load_scene(self, name):
+        pass
 
 
 
@@ -67,18 +152,18 @@ class EditorApp(App):
         Window.maximize()
         self.layout = MyLayout()
         self.setup_layout()
+        self.layout.load_project(self.prc_name, self.prc_path)
         return self.layout
 
     def setup_layout(self):
         self.getProjectPath()
-        self.layout.file_manager_list.path = self.prc_path
-        self.layout.file_manager_icon.path = self.prc_path
+
 
     def getProjectPath(self):
         with open(script_dir+"\\projects.json") as projects_file:
             self.project_data = json.load(projects_file)
-        self.prc_path = f"{self.project_data[self.prc_name][0]}/{self.prc_name}"
+        self.prc_path = f"{self.project_data[self.prc_name][0]}\\{self.prc_name}"
 
 
 
-EditorApp(prc_name="ExampleProject").run()
+EditorApp(prc_name=prc_name).run()
