@@ -65,8 +65,24 @@ class RoundedButton(Button):
         super(RoundedButton, self).__init__(**kwargs)
 
 class DefaultButton(Button):
+    selected = False
+    root_link = None
     def __init__(self, **kwargs):
         super(DefaultButton, self).__init__(**kwargs)
+    def visual_update(self):
+        if self.selected:
+            self.background_color = (178/255, 194/255, 214/255, 1)
+        else:
+            self.background_color = (125/255, 125/255, 125/255, 1)
+        
+    def select(self):
+        self.selected = True
+        self.visual_update()
+        self.root_link.clear_select(self)
+        
+    def deselect(self): 
+        self.selected = False
+        self.visual_update()
 
 class MyLayout(FloatLayout):
     scenetree_layout = ObjectProperty()
@@ -115,6 +131,7 @@ class MyLayout(FloatLayout):
             widgets = []
             for scene in project_data:
                 instance = RoundedButton()
+                instance.on_press = lambda x=scene: self.load_scene(x)  
                 instance.text = scene
                 widgets.append(instance)
                 instance = None
@@ -158,6 +175,9 @@ class MyLayout(FloatLayout):
     
     def load_scene(self, name):
         if name in project_data:
+            self.scenetree_layout.clear_widgets()
+            self.scene_name_label.text = name
+
             temp_scene = project_data[name]
             temp_scene_name = name
             
@@ -166,15 +186,24 @@ class MyLayout(FloatLayout):
             for obj in temp_scene:
                 instance = DefaultButton()
                 instance.text = obj
+                instance.root_link = self
                 widgets.append(instance)
                 instance = None
+            if len(widgets) >= 1:
+                widgets[0].selected = True
+                widgets[0].visual_update()
             for widget in widgets:
                 self.scenetree_layout.add_widget(widget)
+            self.scenetree_temp = widgets.copy()
             widgets.clear()
                 
 
         else:
             print(f"[ERROR] Scene <{name}> doesnt exist")
+
+    def clear_select(self, exception=None):
+        for widget in self.scenetree_temp:
+            if widget != exception: widget.deselect()
 
 
 
