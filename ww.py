@@ -1,36 +1,24 @@
 from kivy.app import App
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.scatter import Scatter
-from kivy.uix.image import Image
-from kivy.graphics import Rectangle, Color
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.button import Button
 
-class DraggableImage(Scatter):
-    pass
-
-class MyLayout(FloatLayout):
-    def __init__(self, **kwargs):
-        super(MyLayout, self).__init__(**kwargs)
-
-        # Add a rectangle with an image to the canvas
-        with self.canvas:
-            Color(1, 1, 1, 1)  # White color (adjust as needed)
-            self.rect = Rectangle(pos=self.pos, size=(100, 100))  # Adjust size as needed
-
-        # Create a draggable image
-        image = Image(source='path_to_your_image.jpg')  # Replace with the actual path to your image
-        draggable_image = DraggableImage()
-        draggable_image.add_widget(image)
-        self.add_widget(draggable_image)
-
-        # Bind the rectangle's position to the layout's position
-        self.bind(pos=self.update_rect_pos)
-
-    def update_rect_pos(self, instance, value):
-        self.rect.pos = self.pos
-
-class MyApp(App):
+class FileManagerApp(App):
     def build(self):
-        return MyLayout()
+        # Number of columns in the grid layout
+        num_cols = 3
+
+        # Create a grid layout
+        grid_layout = GridLayout(cols=num_cols, spacing=10)
+
+        # Add buttons (representing files) to the grid layout
+        for i in range(10):  # Replace this with the actual number of files
+            # Use a Button as a placeholder for your file representation
+            button = Button(text=f"File {i+1}", size_hint_x=None, width=150)
+            
+            # Add the button to the grid layout
+            grid_layout.add_widget(button)
+
+        return grid_layout
 
 if __name__ == '__main__':
-    MyApp().run()
+    FileManagerApp().run()

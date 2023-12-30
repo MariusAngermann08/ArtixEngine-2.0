@@ -196,6 +196,12 @@ class ProjectLayout(FloatLayout):
 
 
 class MyLayout(TabbedPanel):
+    #language
+    lan_prc_tab = ObjectProperty()
+    lan_about_tab = ObjectProperty()
+    lan_settings_tab = ObjectProperty()
+
+
     projects_grid = ObjectProperty(None)
     project_data = {}
     def OpenProjectDialog(self):
@@ -267,6 +273,16 @@ class MyLayout(TabbedPanel):
     def TestProjectTemplate(self):
         self.projects_grid.add_widget(ProjectLayout())
         self.projects_grid.add_widget(ProjectLayout())
+
+    def set_language(self, lan):
+        lan_dict = None
+        with open(f"lan/{lan}.json") as file:
+            lan_dict = json.load(file)
+        if lan_dict:
+            self.lan_prc_tab.text = lan_dict["prc_tab"]
+            self.lan_about_tab.text = lan_dict["about_tab"]
+            self.lan_settings_tab.text = lan_dict["settings_tab"]
+        
 
 
 class ProjectManagerApp(App):

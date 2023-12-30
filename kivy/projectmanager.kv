@@ -1,7 +1,13 @@
 <MyLayout>:
+    lan_prc_tab: lan_prc_tab
+    lan_about_tab: lan_about_tab
+    lan_settings_tab: lan_settings_tab
+
+
     projects_grid: kv_projects_grid
     do_default_tab: False
     TabbedPanelItem:
+        id: lan_prc_tab
         text: "Projects"
         FloatLayout:
             Label:
@@ -28,13 +34,24 @@
                     
               
     TabbedPanelItem:
+        id: lan_about_tab
         text: "About"
         Label:
             text: "Artix-Engine is an opensource game engine developed by Marius Angermann."
     TabbedPanelItem:
+        id: lan_settings_tab
         text: "Settings"
-        Label:
-            text: "Modify the settings to customize Artix-Engine."
+        FloatLayout:
+            Button:
+                text: "Deutsch"
+                on_release: root.set_language("deutsch")
+                size_hint: 0.15,0.1
+                pos_hint: {"x":0,"y":0.8}
+            Button:
+                text: "English"
+                on_release: root.set_language("english")
+                size_hint: 0.15,0.1
+                pos_hint: {"x":0.16,"y":0.8}
 
 <ProjectDialog>:
     #Global Variables

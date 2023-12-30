@@ -33,6 +33,9 @@ import sys
 import shutil
 import json
 
+
+
+
 script_dir = os.path.dirname(os.path.realpath(__file__))
 Builder.load_file("kivy/editor.kv")
 
@@ -40,7 +43,7 @@ prc_name = ""
 
 if len(sys.argv) > 1:
     prc_name = sys.argv[1]
-else: prc_name = "ExampleProject" #sys.exit()
+else: prc_name = "ExampleProject"
 
 
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
@@ -89,6 +92,8 @@ class MyLayout(FloatLayout):
     viewport_layout = ObjectProperty()
     scenelist_layout = ObjectProperty()
     scene_name_label = ObjectProperty()
+
+    selected = None
 
     def __init__(self, **kwargs):
         super(MyLayout, self).__init__(**kwargs)
