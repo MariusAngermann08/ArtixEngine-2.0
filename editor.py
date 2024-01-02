@@ -28,6 +28,7 @@ from kivy.uix.codeinput import CodeInput
 from kivy.extras.highlight import KivyLexer
 from kivy.uix.scatter import Scatter
 from kivy.graphics import Rectangle, Color
+from kivy.uix.image import Image
 import os
 import sys
 import shutil
@@ -86,6 +87,12 @@ class DefaultButton(Button):
     def deselect(self): 
         self.selected = False
         self.visual_update()
+
+class File(FloatLayout):
+    def __init__(self, **kwargs):
+        super(File, self).__init__(**kwargs)
+
+
 
 class MyLayout(FloatLayout):
     scenetree_layout = ObjectProperty()

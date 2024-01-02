@@ -1,3 +1,33 @@
+<File>:
+    size_hint_y: None
+    height: 95
+    size_hint_x: None
+    width: 85
+    canvas.before:
+        Color:
+            rgba: 100/255,100/255,100/255,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    Image:
+        source: "kivy/icon/script.png"
+        size_hint: 1,0.8
+        pos_hint: {"x":0,"y":0.2}
+    TextInput:
+        multiline: False
+        line_height: 1
+        foreground_color: 1,1,1,1
+        background_color: 36/255,36/255,36/255,1
+        background_normal: "kivy/img/white.png"
+        background_active: "kivy/img/white.png"
+        readonly: True
+        text: "player_script.py"
+        size_hint: 1,0.2
+        pos_hint: {"x":0,"y":0}
+        font_size: 12
+        padding_y: [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
+
+
 <RoundedButton@Button>:
     background_color: 0,0,0,0  # the last zero is the critical on, make invisible
     text: "Empty"
@@ -50,22 +80,18 @@
             text: "Scripting"
             font_size: 20
             FloatLayout:
-                cols: 1
                 ScrollView:
                     size_hint: 0.3, 1
-                    pos_hint: {"x": 0}
+                    pos_hint: {"x": 0, "y":0}
+                    size_hint_y: None
                     GridLayout:
                         cols: 1
                         height: self.minimum_height
                         spacing: 10
-                        size_hint_y: None
-                        Button:
-                            text:"PlayerScript.py"
-                            size_hint_y: None
-                            height: 50     
+                        size_hint_y: None   
                 CodeInput:
                     font_size: 20
-                    size_hint: 0.7, 10
+                    size_hint: 0.7, 1
                     pos_hint: {"x": 0.3, "y": 0}
         TabbedPanelItem:
             text: "Documentation"
@@ -144,36 +170,10 @@
             cols: 9
             size_hint_y: None
             spacing: 20
-            Button:
-                text: "Test"
-                size_hint_y: None
-                height: 150   
-                size_hint_x: None
-                width: 140
-            Button:
-                text: "Test"
-                size_hint_y: None
-                height: 150   
-                size_hint_x: None
-                width: 140
-            Button:
-                text: "Test"
-                size_hint_y: None
-                height: 150   
-                size_hint_x: None
-                width: 140
-            Button:
-                text: "Test"
-                size_hint_y: None
-                height: 150   
-                size_hint_x: None
-                width: 140
-            Button:
-                text: "Test"
-                size_hint_y: None
-                height: 150   
-                size_hint_x: None
-                width: 140
+            File:
+            File:
+            
+            
             
             
 
