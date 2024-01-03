@@ -1,24 +1,45 @@
 from kivy.app import App
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.button import Button
+from kivy.uix.floatlayout import FloatLayout
+from kivy.graphics import Rectangle, Color
 
-class FileManagerApp(App):
+class TwoFloatLayoutsApp(App):
     def build(self):
-        # Number of columns in the grid layout
-        num_cols = 3
+        # Create the first float layout
+        layout1 = FloatLayout(size=(300, 300), pos=(0, 0))
+        with layout1.canvas.before:
+            self.color1 = Color(0.5, 0.5, 1, 1)  # Selected color
+            self.rect1 = Rectangle(pos=layout1.pos, size=layout1.size)
 
-        # Create a grid layout
-        grid_layout = GridLayout(cols=num_cols, spacing=10)
+        # Create the second float layout
+        layout2 = FloatLayout(size=(300, 300), pos=(300, 0))
+        with layout2.canvas.before:
+            self.color2 = Color(1, 0.5, 0.5, 1)  # Unselected color
+            self.rect2 = Rectangle(pos=layout2.pos, size=layout2.size)
 
-        # Add buttons (representing files) to the grid layout
-        for i in range(10):  # Replace this with the actual number of files
-            # Use a Button as a placeholder for your file representation
-            button = Button(text=f"File {i+1}", size_hint_x=None, width=150)
-            
-            # Add the button to the grid layout
-            grid_layout.add_widget(button)
+        # Add the float layouts to the root layout
+        root_layout = FloatLayout()
+        root_layout.add_widget(layout1)
+        root_layout.add_widget(layout2)
 
-        return grid_layout
+        # Bind the on_touch_down event to handle selection
+        root_layout.bind(on_touch_down=self.on_touch_down)
+
+        return root_layout
+
+    def on_touch_down(self, instance, touch):
+        if instance.collide_point(*touch.pos):
+            # Determine which layout is selected based on touch position
+            layout1 = instance.children[0]
+            layout2 = instance.children[1]
+
+            if layout1.collide_point(*touch.pos):
+                # Select layout 1
+                self.color1.rgba = (0.5, 0.5, 1, 1)
+                self.color2.rgba = (1, 0.5, 0.5, 1)
+            elif layout2.collide_point(*touch.pos):
+                # Select layout 2
+                self.color1.rgba = (1, 0.5, 0.5, 1)
+                self.color2.rgba = (0.5, 0.5, 1, 1)
 
 if __name__ == '__main__':
-    FileManagerApp().run()
+    TwoFloatLayoutsApp().run()

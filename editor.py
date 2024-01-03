@@ -89,8 +89,55 @@ class DefaultButton(Button):
         self.visual_update()
 
 class File(FloatLayout):
+    file_menu = ObjectProperty()
+    icon = ObjectProperty()
+
+    type = "script"
+    selected = False
     def __init__(self, **kwargs):
         super(File, self).__init__(**kwargs)
+        self.build()    
+
+
+    def build(self, **kwargs):
+        with self.canvas.before:
+            self.color = Color(rgba=(50/255, 50/255, 50/255, 1))
+            self.rect = Rectangle(pos=self.pos, size=self.size)
+        return self
+
+    def clear_canvas(self):
+        self.canvas.before.clear()
+        
+
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos) and touch.button == 'left':
+            self.select()
+    
+    def select(self): 
+        self.selected = True
+        self.visual_update()
+    def deselect(self): 
+        self.selected = False
+        self.visual_update()
+
+    def visual_update(self):
+        self.canvas.before.clear()
+        if self.selected == True:
+            print("white init")
+            with self.canvas.before:
+                self.color.rgba = (100/255, 100/255, 100/255, 1)
+        else:
+            print("black init")
+            with self.canvas.before:
+                self.color.rgba = (50/255, 50/255, 50/255, 1)
+        
+        if self.type == "script":
+            self.icon.source = "kivy/icon/script.png"
+        elif self.type == "image":
+            self.icon.source = "kivy/icon/image.png"
+
+        print(self.color.rgba)
 
 
 
@@ -99,6 +146,7 @@ class MyLayout(FloatLayout):
     viewport_layout = ObjectProperty()
     scenelist_layout = ObjectProperty()
     scene_name_label = ObjectProperty()
+    file_manager = ObjectProperty()
 
     selected = None
 
@@ -162,6 +210,17 @@ class MyLayout(FloatLayout):
                     break
 
                 self.load_scene(target)
+        
+        #loading files into file manager
+        widgets = []
+        for i in range(3):
+            file = File()
+            file.visual_update()
+            widgets.append(file)
+
+        for widget in widgets:
+            self.file_manager.add_widget(widget)
+
 
     def save_project(self):
         #Converting data/scene/[objects] to list

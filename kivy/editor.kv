@@ -1,16 +1,26 @@
 <File>:
+    file_menu: kv_file_menu
+    icon: kv_icon
+
     size_hint_y: None
     height: 95
     size_hint_x: None
     width: 85
-    canvas.before:
-        Color:
-            rgba: 100/255,100/255,100/255,1
-        Rectangle:
-            pos: self.pos
-            size: self.size
+
+    
+    #file context  
+    ContextMenu:
+        id: kv_file_menu
+        visible: False
+        cancel_handler_widget: root
+
+        ContextMenuTextItem:
+            font_size: 20
+            text: "Delete"
+    
     Image:
         source: "kivy/icon/script.png"
+        id: kv_icon
         size_hint: 1,0.8
         pos_hint: {"x":0,"y":0.2}
     TextInput:
@@ -27,6 +37,8 @@
         font_size: 12
         padding_y: [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
 
+       
+            
 
 <RoundedButton@Button>:
     background_color: 0,0,0,0  # the last zero is the critical on, make invisible
@@ -54,6 +66,8 @@
     scenetree_layout: kv_scenetree_layout
     scenelist_layout: kv_scenelist_layout
     scene_name_label: kv_scene_name_label
+    file_manager: kv_file_manager
+     
     id: layout
 
     TabbedPanel:
@@ -167,14 +181,14 @@
         size_hint: 0.60,0.23
         pos_hint: {"x": 0.20, "y": 0}
         GridLayout:
+            id: kv_file_manager
             cols: 9
             size_hint_y: None
             spacing: 20
-            File:
-            File:
+
             
-            
-            
+    
+        
             
 
     ContextMenu:
