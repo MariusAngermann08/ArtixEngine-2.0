@@ -3,10 +3,11 @@
     icon: kv_icon
 
     size_hint_y: None
-    height: 95
+    height: 105
     size_hint_x: None
-    width: 85
+    width: 95
 
+    
     
     #file context  
     ContextMenu:
@@ -17,12 +18,14 @@
         ContextMenuTextItem:
             font_size: 20
             text: "Delete"
-    
-    Image:
-        source: "kivy/icon/script.png"
-        id: kv_icon
+    Button:
         size_hint: 1,0.8
         pos_hint: {"x":0,"y":0.2}
+        background_normal: "kivy/icon/script.png"
+        background_down: "kivy/icon/script.png"
+        id: kv_icon
+        on_press: root.select()
+            
     TextInput:
         multiline: False
         line_height: 1

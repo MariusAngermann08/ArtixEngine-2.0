@@ -92,52 +92,46 @@ class File(FloatLayout):
     file_menu = ObjectProperty()
     icon = ObjectProperty()
 
+    root_link = None
     type = "script"
     selected = False
+
     def __init__(self, **kwargs):
         super(File, self).__init__(**kwargs)
-        self.build()    
 
 
-    def build(self, **kwargs):
-        with self.canvas.before:
-            self.color = Color(rgba=(50/255, 50/255, 50/255, 1))
-            self.rect = Rectangle(pos=self.pos, size=self.size)
-        return self
 
-    def clear_canvas(self):
-        self.canvas.before.clear()
-        
-
-
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos) and touch.button == 'left':
-            self.select()
     
     def select(self): 
-        self.selected = True
-        self.visual_update()
+        if self.selected: self.deselect()
+        else:
+            self.root_link.clear_file_select(exception=self)
+            self.selected = True
+            self.visual_update()
     def deselect(self): 
         self.selected = False
         self.visual_update()
 
     def visual_update(self):
-        self.canvas.before.clear()
-        if self.selected == True:
-            print("white init")
-            with self.canvas.before:
-                self.color.rgba = (100/255, 100/255, 100/255, 1)
-        else:
-            print("black init")
-            with self.canvas.before:
-                self.color.rgba = (50/255, 50/255, 50/255, 1)
+
+            
         
         if self.type == "script":
-            self.icon.source = "kivy/icon/script.png"
+            if self.selected:
+                self.icon.background_normal = "kivy/icon/script_selected.png"
+                self.icon.background_down = "kivy/icon/script_selected.png"
+            else:
+                self.icon.background_normal = "kivy/icon/script.png"
+                self.icon.background_down = "kivy/icon/script.png"
         elif self.type == "image":
-            self.icon.source = "kivy/icon/image.png"
+            if self.selected:
+                self.icon.background_normal = "kivy/icon/image_selected.png"
+                self.icon.background_down = "kivy/icon/image_selected.png"
+            else:
+                self.icon.background_normal = "kivy/icon/image.png"
+                self.icon.background_down = "kivy/icon/image_selected.png"
+                
 
-        print(self.color.rgba)
 
 
 
@@ -156,6 +150,8 @@ class MyLayout(FloatLayout):
             Color(1,0,0,.5, mode="rgba")
             self.rect = Rectangle(pos=(0,0), size=(100,100))
             self.rect.pos = (1000,500)
+
+    
 
     def load_project(self, name, path):
         self.scenetree_layout.clear_widgets()
@@ -212,13 +208,15 @@ class MyLayout(FloatLayout):
                 self.load_scene(target)
         
         #loading files into file manager
-        widgets = []
+        self.file_widgets = []
         for i in range(3):
             file = File()
+            file.root_link = self
+            file.type = "script"
             file.visual_update()
-            widgets.append(file)
+            self.file_widgets.append(file)
 
-        for widget in widgets:
+        for widget in self.file_widgets:
             self.file_manager.add_widget(widget)
 
 
@@ -276,6 +274,9 @@ class MyLayout(FloatLayout):
         for widget in self.scenetree_temp:
             if widget != exception: widget.deselect()
 
+    def clear_file_select(self, exception=None):
+        for widget in self.file_widgets:
+            if widget != exception: widget.deselect()
 
 
 class EditorApp(App):
