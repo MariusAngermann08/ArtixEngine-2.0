@@ -33,7 +33,7 @@ import os
 import sys
 import shutil
 import json
-
+from plyer import filechooser
 
 
 
@@ -91,10 +91,12 @@ class DefaultButton(Button):
 class File(FloatLayout):
     file_menu = ObjectProperty()
     icon = ObjectProperty()
+    file_name = ObjectProperty()
 
     root_link = None
     type = "script"
     selected = False
+    text = "script.py"
 
     def __init__(self, **kwargs):
         super(File, self).__init__(**kwargs)
@@ -114,7 +116,7 @@ class File(FloatLayout):
 
     def visual_update(self):
 
-            
+        self.file_name.text = self.text
         
         if self.type == "script":
             if self.selected:
@@ -143,6 +145,8 @@ class MyLayout(FloatLayout):
     file_manager = ObjectProperty()
 
     selected = None
+
+    #project dir at self.prc_path
 
     def __init__(self, **kwargs):
         super(MyLayout, self).__init__(**kwargs)
@@ -207,18 +211,73 @@ class MyLayout(FloatLayout):
 
                 self.load_scene(target)
         
+        self.load_files()
+
+
+
+
+    def load_files(self):
+        self.file_manager.clear_widgets()
+
+        project_dict = {}
+        with open(f"{self.prc_path}\\project.json", "r") as file:
+            project_dict = json.load(file)
+        
+        self.files = project_dict["registered_files"]
+        self.project_dict = project_dict
+
         #loading files into file manager
         self.file_widgets = []
-        for i in range(3):
+        for i in self.files:
             file = File()
             file.root_link = self
-            file.type = "script"
+            if i.endswith(".py"):
+                file.type = "script"
+            elif i.endswith(".png") or i.endswith(".jpg") or i.endswith(".jpeg"):
+                file.type = "image"
+            file.text = i
             file.visual_update()
             self.file_widgets.append(file)
 
         for widget in self.file_widgets:
             self.file_manager.add_widget(widget)
 
+    def import_file(self):
+        try:
+            selected_file = filechooser.open_file(multiple=True, filters = ["*.jpeg","*.jpg","*.png","*.py"])
+            if selected_file:
+                print(selected_file)
+        except Exception as e:
+            print(f"Process canceled! >\n\n{e}")
+            return 1
+        if len(selected_file) >= 1:
+            file_name = os.path.basename(selected_file[0])
+            if file_name in self.files:
+                return 1
+            shutil.copy(selected_file[0],self.prc_path+f"\\Assets\\{file_name}")
+            self.files.append(file_name)
+            self.update_project_file()
+
+    def update_project_file(self):
+        self.project_dict["registered_files"] = self.files
+        with open(f"{self.prc_path}\\project.json", "w") as file:
+            json.dump(self.project_dict, file)
+        self.load_files()
+    
+    def get_selected_file(self):
+        for widget in self.file_widgets:
+            if widget.selected:
+                return widget.text
+
+    def delete_file(self):
+        name = self.get_selected_file()
+        if name in self.files:
+            self.files.remove(name)
+        path = f"{self.prc_path}\\Assets\\{name}"
+        if os.path.exists(path):
+            os.remove(path)
+        self.update_project_file()
+        
 
     def save_project(self):
         #Converting data/scene/[objects] to list

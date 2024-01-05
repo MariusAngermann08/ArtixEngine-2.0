@@ -1,6 +1,7 @@
 <File>:
     file_menu: kv_file_menu
     icon: kv_icon
+    file_name: kv_file_name
 
     size_hint_y: None
     height: 105
@@ -27,6 +28,7 @@
         on_press: root.select()
             
     TextInput:
+        id: kv_file_name
         multiline: False
         line_height: 1
         foreground_color: 1,1,1,1
@@ -172,7 +174,15 @@
             text: "Add"
             font_size: 20
             on_release: kv_fm_add_menu.show(*app.root_window.mouse_pos)
+        
+        RoundedButton:
+            size_hint: 0.09, 0.9
+            pos_hint: {"x": 0.9, "y": 0.05}
+            text: "Delete"
+            font_size: 18
+            on_release: root.delete_file()
 
+            
     #File Manager
     ScrollView:
         canvas.before:
@@ -193,7 +203,7 @@
     
         
             
-
+    #File Manager Add Menu
     ContextMenu:
         id: kv_fm_add_menu
         visible: False
@@ -202,6 +212,7 @@
         ContextMenuTextItem:
             font_size: 20
             text: "Import"
+            on_press: root.import_file()
         ContextMenuDivider:
         ContextMenuTextItem:
             text: "New"

@@ -32,6 +32,7 @@ Builder.load_file("kivy/projectmanager.kv")
 default_project = {
     "name": None,
     "edit": "never",
+    "registered_files": []
 }
 
 default_build_settings = {
