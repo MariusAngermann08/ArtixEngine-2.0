@@ -68,11 +68,26 @@ class RoundedButton(Button):
     def __init__(self, **kwargs):
         super(RoundedButton, self).__init__(**kwargs)
 
-class DefaultButton(Button):
+class InputDialog(Popup):
+    label = ObjectProperty()
+    cancel_button = ObjectProperty()
+    submit_button = ObjectProperty()
+    text_input = ObjectProperty()
+
+    input = ""
+    def __init__(self, **kwargs):
+        super(InputDialog, self).__init__(**kwargs)
+    def submit(self):
+        self.input = self.text_input.text
+        self.dismiss()
+    def get_input(self): return self.input
+
+
+class GameObject(Button):
     selected = False
     root_link = None
     def __init__(self, **kwargs):
-        super(DefaultButton, self).__init__(**kwargs)
+        super(GameObject, self).__init__(**kwargs)
     def visual_update(self):
         if self.selected:
             self.background_color = (178/255, 194/255, 214/255, 1)
@@ -145,6 +160,9 @@ class MyLayout(FloatLayout):
     file_manager = ObjectProperty()
 
     selected = None
+    currentscene = ""
+
+    app_link = None
 
     #project dir at self.prc_path
 
@@ -155,7 +173,7 @@ class MyLayout(FloatLayout):
             self.rect = Rectangle(pos=(0,0), size=(100,100))
             self.rect.pos = (1000,500)
 
-    
+
 
     def load_project(self, name, path):
         self.scenetree_layout.clear_widgets()
@@ -301,8 +319,11 @@ class MyLayout(FloatLayout):
                 with open(f"{self.prc_path}\\Scenes\\{scene}\\{obj}_config.json", "w") as file:
                     json.dump(project_data[scene][obj], file)
     
+        self.app_link.title = f"Artix Editor > \"{prc_name}\"      | <v.1.0-beta>"
+
     def load_scene(self, name):
         if name in project_data:
+            self.currentscene = name
             self.scenetree_layout.clear_widgets()
             self.scene_name_label.text = name
 
@@ -312,7 +333,7 @@ class MyLayout(FloatLayout):
             #Adding objects of scene to scenetree
             widgets = []
             for obj in temp_scene:
-                instance = DefaultButton()
+                instance = GameObject()
                 instance.text = obj
                 instance.root_link = self
                 widgets.append(instance)
@@ -328,6 +349,28 @@ class MyLayout(FloatLayout):
 
         else:
             print(f"[ERROR] Scene <{name}> doesnt exist")
+
+    def create_object(self, type=None):
+        if type == "sprite":
+            self.dialog = InputDialog()
+            self.dialog.title = "Create Object"
+            self.dialog.label.text = "Object Name"
+            self.dialog.submit_button.text = "Create"
+            self.dialog.open()
+            self.dialog.bind(on_dismiss=self.check_object_dialog)
+            
+
+    def check_object_dialog(self, instance):
+        name = self.dialog.get_input()
+        if name != "":
+            widget = GameObject()
+            widget.root_link = self
+            widget.text = name
+            widget.select()
+            self.scenetree_layout.add_widget(widget)
+            project_data[self.currentscene][name] = {"position":[0,0]}
+            self.app_link.title = f"Artix Editor > \"{prc_name}\"      | <v.1.0-beta>*"
+
 
     def clear_select(self, exception=None):
         for widget in self.scenetree_temp:
@@ -350,6 +393,7 @@ class EditorApp(App):
         #Window.fullscreen = 'auto'
         Window.maximize()
         self.layout = MyLayout()
+        self.layout.app_link = self
         self.setup_layout()
         self.layout.load_project(self.prc_name, self.prc_path)
         return self.layout

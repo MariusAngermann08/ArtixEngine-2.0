@@ -1,4 +1,1 @@
-{
-  "DefaultScene": [ "player", "ball" ],
-  "MainMenu": []
-}
+{"DefaultScene": ["player", "ball", "wall"], "MainMenu": []}

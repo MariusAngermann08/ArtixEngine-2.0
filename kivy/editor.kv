@@ -1,3 +1,39 @@
+<InputDialog>:
+    label: kv_input_label
+    cancel_button: kv_input_cancel_button
+    submit_button: kv_input_submit_button
+    text_input: kv_input_textinput
+
+    auto_dismiss: False
+    title: "Input Dialog"
+    size_hint: 0.3,0.25
+    FloatLayout:
+        Label:
+            id: kv_input_label
+            size_hint: 0.7,0.25
+            pos_hint: {"x":0.15, "top":1}
+            text: "Name:"
+            font_size: 25
+        TextInput:
+            id: kv_input_textinput
+            size_hint: 0.8,0.3
+            pos_hint: {"x":0.1, "top":0.7}
+            font_size: 25
+        Button:
+            id: kv_input_cancel_button
+            pos_hint: {"x":0.05, "y":0.025}
+            size_hint: 0.4,0.3
+            font_size: 25
+            text: "Cancel"
+            on_release: root.dismiss()
+        Button:
+            id: kv_input_submit_button
+            pos_hint: {"x":0.55, "y":0.025}
+            size_hint: 0.4,0.3
+            font_size: 25
+            text: "Submit"
+            on_release: root.submit()
+
 <File>:
     file_menu: kv_file_menu
     icon: kv_icon
@@ -58,7 +94,7 @@
             size: self.size
             radius: [30,]
 
-<DefaultButton>:
+<GameObject>:
     text: "Empty"
     size_hint_y: None
     height: 60
@@ -277,6 +313,7 @@
             pos_hint: {"x": 0.75, "y": 0.05}
             size_hint: 0.2,0.8
             font_size: 25
+            on_release: kv_obj_add_menu.show(*app.root_window.mouse_pos)
 
 
 
@@ -298,8 +335,28 @@
             size_hint_y: None
             spacing: 10
             
+    #Add Menu for scenetree
+    ContextMenu:
+        id: kv_obj_add_menu
+        visible: False
+        cancel_handler_widget: layout
 
-    
+        ContextMenuTextItem:
+            font_size: 20
+            text: "Sprite"
+            on_press: root.create_object(type="sprite")
+            
+        ContextMenuDivider:
+        ContextMenuTextItem:
+            text: "UI"
+            font_size: 20
+            ContextMenu:
+                ContextMenuTextItem:
+                    text: "Label"
+                    font_size: 20
+                ContextMenuTextItem:
+                    text: "Button"
+                    font_size: 20
 
             
     AppMenu:
@@ -317,8 +374,7 @@
                 ContextMenuDivider:
                 ContextMenuTextItem:
                     text: "Save"
-                ContextMenuTextItem:
-                    text: "Save As"
+                    on_press: root.save_project()
                 ContextMenuTextItem:
                     text: "Editor Settings"
                 ContextMenuDivider:
