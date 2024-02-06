@@ -39,12 +39,12 @@ from plyer import filechooser
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 Builder.load_file("kivy/editor.kv")
+Builder.load_file("kivy/properties/property.kv")
+Builder.load_file("kivy/properties/transform.kv")
 
 prc_name = ""
 
-if len(sys.argv) > 1:
-    prc_name = sys.argv[1]
-else: prc_name = "ExampleProject"
+
 
 
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
@@ -58,15 +58,36 @@ project_data_example = {
 
 
 
-
 project_data = {}
+deleted_objects = {}
+deleted_scenes = []
+
 
 temp_scene_name = "Untitled"
 temp_scene = {}
 
+
+class PropertyLayout(FloatLayout):
+    def __init__(self, **kwargs):
+        super(PropertyLayout, self).__init__(**kwargs)
+
+class TransformLayout(FloatLayout):
+    def __init__(self, **kwargs):
+        super(TransformLayout, self).__init__(**kwargs)
+    
+
+
+
 class RoundedButton(Button):
+    scene_mode = False
+    layout = None
     def __init__(self, **kwargs):
         super(RoundedButton, self).__init__(**kwargs)
+        self.bind(on_touch_down=self.right_click)
+    def right_click(self, instance, touch):
+        if touch.button == 'right' and instance.collide_point(*touch.pos) and self.scene_mode:
+            if self.layout:
+                self.layout.show_scene_menu(self.text)
 
 class InputDialog(Popup):
     label = ObjectProperty()
@@ -152,30 +173,46 @@ class File(FloatLayout):
 
 
 
-class MyLayout(FloatLayout):
+class AppLayout(FloatLayout):
     scenetree_layout = ObjectProperty()
     viewport_layout = ObjectProperty()
     scenelist_layout = ObjectProperty()
     scene_name_label = ObjectProperty()
     file_manager = ObjectProperty()
+    properties_layout = ObjectProperty()
+    scene_context_menu = ObjectProperty()
+
 
     selected = None
     currentscene = ""
+    selected_object = None
+    property_widgets = []
 
     app_link = None
+    scene_focus = ""
+
+    mouse_pos = None
 
     #project dir at self.prc_path
 
     def __init__(self, **kwargs):
-        super(MyLayout, self).__init__(**kwargs)
+        super(AppLayout, self).__init__(**kwargs)
+        Window.bind(mouse_pos=self.update_mouse_pos)
         with self.viewport_layout.canvas:
             Color(1,0,0,.5, mode="rgba")
             self.rect = Rectangle(pos=(0,0), size=(100,100))
             self.rect.pos = (1000,500)
 
-
+    def update_mouse_pos(self, window, pos): self.mouse_pos = pos
+    
+    def create_untitled_scene(self):
+        global project_data
+        project_data["Untitled"] = {}
 
     def load_project(self, name, path):
+        global deleted_objects
+        global project_data
+
         self.scenetree_layout.clear_widgets()
         self.scenelist_layout.clear_widgets()
         #Checking for project existance and setting paths
@@ -205,34 +242,69 @@ class MyLayout(FloatLayout):
             print("[READING PROJECT]")
             print(project_data)
 
-            #Adding all loaded scenes to the scene list
-            widgets = []
-            for scene in project_data:
-                instance = RoundedButton()
-                instance.on_press = lambda x=scene: self.load_scene(x)  
-                instance.text = scene
-                widgets.append(instance)
-                instance = None
-            
-            for widget in widgets:
-                self.scenelist_layout.add_widget(widget)
-            widgets.clear()
+            self.update_scenelist()
 
 
             if len(project_data) == 0:
-                pass
-            else:
-                target = ""
-                for scene in project_data:
-                    target = scene
-                    break
-
-                self.load_scene(target)
+                self.create_untitled_scene()
+            
+            target = ""
+            for scene in project_data:
+                target = scene
+                break
+            self.load_scene(target)
         
+        deleted_objects.clear()
+        for scene in project_data:
+            deleted_objects[scene] = []
+
         self.load_files()
 
+    def update_scenelist(self):
+        self.scenelist_layout.clear_widgets()
+
+        #Adding all loaded scenes to the scene list
+        widgets = []
+        for scene in project_data:
+            instance = RoundedButton()
+            instance.scene_mode = True
+            instance.layout = self
+            instance.on_press = lambda x=scene: self.load_scene(x)  
+            instance.text = scene
+            widgets.append(instance)
+            instance = None
+        
+        for widget in widgets:
+            self.scenelist_layout.add_widget(widget)
+        widgets.clear()
+
+    def show_scene_menu(self, scene=None):
+        self.scene_context_menu.x = self.mouse_pos[0]
+        self.scene_context_menu.y = self.mouse_pos[1] - self.scene_context_menu.height #+ 20
+        self.scene_context_menu.show()
+        self.scene_focus = scene
 
 
+
+    def load_properties(self, object_name):
+        self.properties_layout.clear_widgets()
+        self.property_widgets.clear()
+
+
+        transform = TransformLayout()
+        
+
+
+        default = PropertyLayout()
+
+
+
+        self.property_widgets.append(transform)
+        self.property_widgets.append(default)
+        for widget in self.property_widgets:
+            self.properties_layout.add_widget(widget)
+        
+        
 
     def load_files(self):
         self.file_manager.clear_widgets()
@@ -295,9 +367,45 @@ class MyLayout(FloatLayout):
         if os.path.exists(path):
             os.remove(path)
         self.update_project_file()
-        
+
+    def delete_object(self):
+        global project_data
+        global deleted_objects
+        name = None
+        if name in project_data[self.currentscene]:
+            del project_data[self.currentscene][name]
+            deleted_objects[self.currentscene].append(name)
+        else:
+            print(f"[ERROR] Object <{name}> cant be deleted because it doesnt exist in scene <{self.currentscene}>")
+        self.load_scene(self.currentscene)
+
+    def delete_scene(self):
+        global project_data
+        global deleted_scenes
+        name = self.scene_focus
+        print(name)
+        if name in project_data:
+            del project_data[name]
+            deleted_scenes.append(name)
+        else:
+            print(f"[ERROR] Scene <{name}> cant be deleted because it doesnt exist")
+        if len(project_data) > 0:
+            target = ""
+            for item in project_data:
+                target = item
+                break
+            self.load_scene(target)
+        else:
+            self.create_untitled_scene()
+            self.load_scene("Untitled")
+        self.update_scenelist()
+
 
     def save_project(self):
+        global project_data
+        global deleted_objects
+        global deleted_scenes
+
         #Converting data/scene/[objects] to list
         scenefile_structure = {}
         for scene in project_data:
@@ -315,10 +423,28 @@ class MyLayout(FloatLayout):
 
         #Writing objects data into their config files
         for scene in project_data:
+            if not os.path.exists(f"{self.prc_path}\\Scenes\\{scene}\\"):
+                os.mkdir(f"{self.prc_path}\\Scenes\\{scene}\\")
             for obj in project_data[scene]:
                 with open(f"{self.prc_path}\\Scenes\\{scene}\\{obj}_config.json", "w") as file:
                     json.dump(project_data[scene][obj], file)
     
+        #Removing files of deleted game objects
+        for scene in deleted_objects:
+            for item in scene:
+                try:
+                    os.remove(f"{self.prc_path}\\Scenes\\{scene}\\{item}_config.json")
+                except:
+                    print(f"[Error] Cant remove files of object: {item}")
+
+        #Removing directorys of deleted scenes
+        for scene in deleted_scenes:
+            try:
+                shutil.rmtree(f"{self.prc_path}\\Scenes\\{scene}\\")
+            except:
+                print(f"[Error] Canceled directory removal of scene {scene}")
+
+
         self.app_link.title = f"Artix Editor > \"{prc_name}\"      | <v.1.0-beta>"
 
     def load_scene(self, name):
@@ -345,6 +471,8 @@ class MyLayout(FloatLayout):
                 self.scenetree_layout.add_widget(widget)
             self.scenetree_temp = widgets.copy()
             widgets.clear()
+            if len(self.scenetree_temp) > 0:
+                self.load_properties(self.scenetree_temp[0].text)
                 
 
         else:
@@ -362,19 +490,42 @@ class MyLayout(FloatLayout):
 
     def check_object_dialog(self, instance):
         name = self.dialog.get_input()
-        if name != "":
-            widget = GameObject()
-            widget.root_link = self
-            widget.text = name
-            widget.select()
-            self.scenetree_layout.add_widget(widget)
-            project_data[self.currentscene][name] = {"position":[0,0]}
+        if name != "" and name not in project_data[self.currentscene]:
+            project_data[self.currentscene][name] = {"position":[0,0],"scale":[100,100]}
             self.app_link.title = f"Artix Editor > \"{prc_name}\"      | <v.1.0-beta>*"
+            self.load_scene(self.currentscene)
+        elif name != "" and name in project_data[self.currentscene]:
+            project_data[self.currentscene][name+"1"] = {"position":[0,0],"scale":[100,100]}
+            self.app_link.title = f"Artix Editor > \"{prc_name}\"      | <v.1.0-beta>*"
+            self.load_scene(self.currentscene)
+
+    def create_scene(self):
+        self.scene_dialog = InputDialog()
+        self.scene_dialog.title = "New Scene"
+        self.scene_dialog.label.text = "Scene Name"
+        self.scene_dialog.submit_button.text = "Create"
+        self.scene_dialog.open()
+        self.scene_dialog.bind(on_dismiss=self.check_scene_dialog)
+
+    def check_scene_dialog(self, instance):
+        name = self.scene_dialog.get_input()
+        if name != "" and name not in project_data:
+            project_data[name] = {}
+            self.load_scene(name)
+        elif name != "" and name in project_data:
+            project_data[name+"1"] = {}
+            self.load_scene[name+1]
+        self.update_scenelist()
+
+        
 
 
     def clear_select(self, exception=None):
         for widget in self.scenetree_temp:
             if widget != exception: widget.deselect()
+        if exception: 
+            self.selected_object = exception.text
+            self.load_properties(self.selected_object)
 
     def clear_file_select(self, exception=None):
         for widget in self.file_widgets:
@@ -392,7 +543,7 @@ class EditorApp(App):
         Window.clearcolor = (50/255, 50/255, 50/255, 1)
         #Window.fullscreen = 'auto'
         Window.maximize()
-        self.layout = MyLayout()
+        self.layout = AppLayout()
         self.layout.app_link = self
         self.setup_layout()
         self.layout.load_project(self.prc_name, self.prc_path)
@@ -408,5 +559,12 @@ class EditorApp(App):
         self.prc_path = f"{self.project_data[self.prc_name][0]}\\{self.prc_name}"
 
 
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        prc_name = sys.argv[1]
+    else: 
+        #print(print("[ERROR] Please specify project name --> ArtixEngine \"<project_name>\""))
+        #sys.exit()
+        prc_name = "example_project"
+    EditorApp(prc_name=prc_name).run()
 
-EditorApp(prc_name=prc_name).run()

@@ -1,0 +1,25 @@
+<PropertyLayout>:
+    canvas.before:
+        Color:
+            rgba: 60/255,60/255,60/255,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    size_hint_y: None
+    height: 150
+
+    #headbar
+    FloatLayout:
+        size_hint: 1,0.2
+        pos_hint: {"x":0,"top":1}
+        canvas.before:
+            Color:
+                rgba: 74/255, 100/255, 143/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            text: "<DefaultPropertyLayout>"
+            pos_hint: {"x":0,"y":0}
+            size_hint: 1,1
+            font_size: 15

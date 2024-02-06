@@ -1,0 +1,125 @@
+<TransformLayout>:
+    canvas.before:
+        Color:
+            rgba: 60/255,60/255,60/255,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    size_hint_y: None
+    height: 150
+
+    #headbar
+    FloatLayout:
+        size_hint: 1,0.2
+        pos_hint: {"x":0,"top":1}
+        canvas.before:
+            Color:
+                rgba: 74/255, 100/255, 143/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            text: "Transform"
+            pos_hint: {"x":0,"y":0}
+            size_hint: 1,1
+            font_size: 15
+    
+    #Position Layout
+    FloatLayout
+        size_hint: 1,0.2
+        pos_hint: {"x":0,"top":0.7}
+        canvas.before:
+            Color:
+                rgba: 74/255, 74/255, 74/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            text: "Position:"
+            size_hint: 0.3,1
+            pos_hint: {"x":0, "y":0}
+            font_size: 20
+        
+        TextInput:
+            size_hint: 0.2,1
+            pos_hint: {"x":0.35, "y":0}
+            text: "0.0"
+
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 196/255, 43/255, 43/255,1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            text: "X"
+            size_hint: 0.1,1
+            pos_hint: {"x":0.55, "y":0}
+            font_size: 15
+
+        TextInput:
+            size_hint: 0.2,1
+            pos_hint: {"x":0.7, "y":0}
+            text: "0.0"
+
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 42/255, 112/255, 173/255,1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            text: "Y"
+            size_hint: 0.1,1
+            pos_hint: {"x":0.9, "y":0}
+            font_size: 15
+    
+    #Scale Layout
+    FloatLayout
+        size_hint: 1,0.2
+        pos_hint: {"x":0,"top":0.4}
+        canvas.before:
+            Color:
+                rgba: 74/255, 74/255, 74/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            text: "Scale:"
+            size_hint: 0.3,1
+            pos_hint: {"x":0, "y":0}
+            font_size: 20
+        
+        TextInput:
+            size_hint: 0.2,1
+            pos_hint: {"x":0.35, "y":0}
+            text: "0.0"
+
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 196/255, 43/255, 43/255,1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            text: "X"
+            size_hint: 0.1,1
+            pos_hint: {"x":0.55, "y":0}
+            font_size: 15
+
+        TextInput:
+            size_hint: 0.2,1
+            pos_hint: {"x":0.7, "y":0}
+            text: "0.0"
+
+        Label:
+            canvas.before:
+                Color:
+                    rgba: 42/255, 112/255, 173/255,1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            text: "Y"
+            size_hint: 0.1,1
+            pos_hint: {"x":0.9, "y":0}
+            font_size: 15

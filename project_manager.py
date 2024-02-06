@@ -23,8 +23,10 @@ from plyer import filechooser
 import os
 import shutil
 import json
+import threading
 
-
+project_to_run = ""
+close = True
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 Builder.load_file("kivy/projectmanager.kv")
@@ -190,7 +192,7 @@ class ProjectLayout(FloatLayout):
 
 
     def open_project(self):
-        pass
+        self.panel_link.open_editor(self.project_name.text)
         
     
 
@@ -202,7 +204,7 @@ class MyLayout(TabbedPanel):
     lan_about_tab = ObjectProperty()
     lan_settings_tab = ObjectProperty()
 
-
+    app_link = None
     projects_grid = ObjectProperty(None)
     project_data = {}
     def OpenProjectDialog(self):
@@ -283,8 +285,14 @@ class MyLayout(TabbedPanel):
             self.lan_prc_tab.text = lan_dict["prc_tab"]
             self.lan_about_tab.text = lan_dict["about_tab"]
             self.lan_settings_tab.text = lan_dict["settings_tab"]
-        
 
+    def open_editor(self,name):
+        global project_to_run
+        global close
+
+        project_to_run = name
+        close = False
+        self.app_link.stop()
 
 class ProjectManagerApp(App):
     def build(self):
@@ -293,6 +301,7 @@ class ProjectManagerApp(App):
         Window.clearcolor = (95/255, 118/255, 133/255, 1)
         Window.size = (800,600)
         layout = MyLayout()
+        layout.app_link = self
         Window.bind(on_key_down=layout.on_keyboard_down)
         layout.update(None)
         return layout
@@ -300,3 +309,7 @@ class ProjectManagerApp(App):
 
 if __name__ == "__main__":
     ProjectManagerApp().run()
+
+if not close:
+    import editor
+    editor.EditorApp(prc_name=project_to_run).run()
