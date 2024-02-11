@@ -24,6 +24,7 @@ from kivy.config import Config
 from kivy.graphics import Rectangle
 from kivy.graphics import Color
 import kivy_garden.contextmenu
+from kivy.uix.stencilview import StencilView
 from kivy.uix.codeinput import CodeInput
 from kivy.extras.highlight import KivyLexer
 from kivy.uix.scatter import Scatter
@@ -34,13 +35,18 @@ import sys
 import shutil
 import json
 from plyer import filechooser
-
-
+from kivy.uix.relativelayout import RelativeLayout
+import keyboard
+from pynput.mouse import Controller#, Button
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
+print(script_dir)
 Builder.load_file("kivy/editor.kv")
+
+#Load Properties
 Builder.load_file("kivy/properties/property.kv")
 Builder.load_file("kivy/properties/transform.kv")
+Builder.load_file("kivy/properties/image_texture.kv")
 
 prc_name = ""
 
@@ -59,23 +65,43 @@ project_data_example = {
 
 
 project_data = {}
+build_settings = {}
 deleted_objects = {}
 deleted_scenes = []
 
+mouse = Controller()
 
 temp_scene_name = "Untitled"
 temp_scene = {}
 
+def is_numeric(string):
+    try:
+        float_value = float(string)
+        return True
+    except ValueError:
+        return False
+
+class WarningDialog(Popup):
+    warninglabel = ObjectProperty(None)
 
 class PropertyLayout(FloatLayout):
     def __init__(self, **kwargs):
         super(PropertyLayout, self).__init__(**kwargs)
 
 class TransformLayout(FloatLayout):
+    pos_x = ObjectProperty()
+    pos_y = ObjectProperty()
+    scale_x = ObjectProperty()
+    scale_y = ObjectProperty()
     def __init__(self, **kwargs):
         super(TransformLayout, self).__init__(**kwargs)
     
-
+class ImageTextureLayout(FloatLayout):
+    texture_preview = ObjectProperty()
+    texture_name = ObjectProperty()
+    layout = None
+    def __init__(self, **kwargs):
+        super(ImageTextureLayout,self).__init__(**kwargs)
 
 
 class RoundedButton(Button):
@@ -102,6 +128,142 @@ class InputDialog(Popup):
         self.input = self.text_input.text
         self.dismiss()
     def get_input(self): return self.input
+
+class ImageScatter(Scatter):
+    viewport = None
+    name = None
+    def __init__(self, source,**kwargs):
+        super(ImageScatter, self).__init__(**kwargs)
+        self.image = Image(source=source)
+        self.add_widget(self.image)
+    def on_touch_up(self, touch):
+        if self.collide_point(*touch.pos):
+            self.viewport.update_object_position(self.name)
+        return super().on_touch_up(touch)
+
+class Viewport(RelativeLayout):
+    layout = None
+    bg_color = (255,255,255)
+    display_offset = (0,0)
+
+    object_widgets = []
+    mouse_wheel_pressed = False
+
+    last_mouse_pos = None
+    current_mouse_pos = None
+
+
+    def __init__(self, **kwargs):
+        super(Viewport, self).__init__(**kwargs)
+
+        with self.canvas.before:
+            # Set the background color (in this case, it's set to red)
+            Color(self.bg_color[0]/255,self.bg_color[1]/255,self.bg_color[2]/255,1)  # RGBA values (red, green, blue, alpha)
+            self.rect = Rectangle(pos=self.pos, size=self.size)
+
+        #Add Later
+        #self.offset_label = Label(text="No Offset")
+        #self.offset_label.color = (0,0,0,1)
+        #self.add_widget(self.offset_label)
+
+        self.stencil_view = StencilView(size_hint=(1,1))
+        self.add_widget(self.stencil_view)
+        print("Viewport init")
+
+        Clock.schedule_interval(self.on_update, 1 / 60)
+        self.bind(size=self.update_rect)
+        Window.bind(on_touch_down=self.mouse_down)
+        Window.bind(on_touch_up=self.mouse_up)
+        
+
+    def update_rect(self, instance, value):
+        # Update the background color when the size changes
+        self.rect.pos = self.pos
+        self.rect.size = self.size
+        self.layout.load_viewport()
+
+    def add_object(self,name):
+        global project_data
+
+        #getting values from project data
+        path = self.layout.convert_image_name_to_path(project_data[self.layout.currentscene][name]["img_texture"])
+        posx = project_data[self.layout.currentscene][name]["position"][0]
+        posy = project_data[self.layout.currentscene][name]["position"][1]
+        scalex = project_data[self.layout.currentscene][name]["scale"][0]
+        scaley = project_data[self.layout.currentscene][name]["scale"][1]
+
+        scatter = ImageScatter(path)
+        scatter.viewport = self
+        scatter.name = name
+
+        #Converting values
+        posy = self.height - posy
+
+        #Calculate offsets
+        posx += self.display_offset[0]
+        posy += self.display_offset[1]
+
+        #Setting values
+        scatter.pos = (posx,posy)
+        scatter.width = scalex
+        scatter.height = scaley
+        scatter.image.width = scalex
+        scatter.image.height = scaley
+
+        self.object_widgets.append(scatter)
+        self.stencil_view.add_widget(scatter)
+    
+    def clear_all(self):
+        self.stencil_view.clear_widgets()
+        self.object_widgets.clear()
+
+    def mouse_down(self, instance, touch):
+        if touch.button == "middle":
+            self.mouse_wheel_pressed = True
+
+    def mouse_up(self, instance, touch):
+        if touch.button == "middle":
+            self.mouse_wheel_pressed = False
+    
+    def on_update(self, dt):
+        #self.offset_label.text = f"Offset> X:{str(self.display_offset[0])}  Y:{str(self.display_offset[1])}"
+        if self.mouse_wheel_pressed:
+            if self.last_mouse_pos != self.layout.mouse_pos:
+                deltax = self.last_mouse_pos[0]-self.layout.mouse_pos[0]
+                deltay = self.last_mouse_pos[1]-self.layout.mouse_pos[1]
+                self.display_offset = (self.display_offset[0]-deltax,self.display_offset[1]-deltay)
+                self.layout.load_viewport()
+        self.last_mouse_pos = self.layout.mouse_pos
+    
+    def update_object_position(self, name):
+        global build_settings
+        global project_data
+
+        target = None
+        for item in self.object_widgets:
+            if item.name == name: target=item
+        if target:
+            #Getting values
+            posx = target.pos[0]
+            posy = target.pos[1]
+            #Reverting Offsets
+            posx -= self.display_offset[0]
+            posy -= self.display_offset[1]
+            
+            #posy -= target.height/2
+            #Converting values
+            posy = build_settings["resolution"][1] - posy
+            project_data[self.layout.currentscene][name]["position"] = [posx,posy]
+
+            self.layout.load_viewport()
+            self.layout.load_properties(self.layout.selected_object)
+        
+
+            
+    
+    
+
+
 
 
 class GameObject(Button):
@@ -156,18 +318,18 @@ class File(FloatLayout):
         
         if self.type == "script":
             if self.selected:
-                self.icon.background_normal = "kivy/icon/script_selected.png"
-                self.icon.background_down = "kivy/icon/script_selected.png"
+                self.icon.background_normal = f"{script_dir}\\kivy\\icon\\script_selected.png"
+                self.icon.background_down = f"{script_dir}\\kivy\\icon\\script_selected.png"
             else:
-                self.icon.background_normal = "kivy/icon/script.png"
-                self.icon.background_down = "kivy/icon/script.png"
+                self.icon.background_normal = f"{script_dir}\\kivy\\icon\\script.png"
+                self.icon.background_down = f"{script_dir}\\kivy\\icon\\script.png"
         elif self.type == "image":
             if self.selected:
-                self.icon.background_normal = "kivy/icon/image_selected.png"
-                self.icon.background_down = "kivy/icon/image_selected.png"
+                self.icon.background_normal = f"{script_dir}\\kivy\\icon\\image_selected.png"
+                self.icon.background_down = f"{script_dir}\\kivy\\icon\\image_selected.png"
             else:
-                self.icon.background_normal = "kivy/icon/image.png"
-                self.icon.background_down = "kivy/icon/image_selected.png"
+                self.icon.background_normal = f"{script_dir}\\kivy\\icon\\image.png"
+                self.icon.background_down = f"{script_dir}\\kivy\\icon\\image_selected.png"
                 
 
 
@@ -175,18 +337,18 @@ class File(FloatLayout):
 
 class AppLayout(FloatLayout):
     scenetree_layout = ObjectProperty()
-    viewport_layout = ObjectProperty()
     scenelist_layout = ObjectProperty()
     scene_name_label = ObjectProperty()
     file_manager = ObjectProperty()
     properties_layout = ObjectProperty()
     scene_context_menu = ObjectProperty()
-
+    viewport_panel_item = ObjectProperty()
 
     selected = None
     currentscene = ""
     selected_object = None
     property_widgets = []
+    file_widgets = []
 
     app_link = None
     scene_focus = ""
@@ -198,10 +360,20 @@ class AppLayout(FloatLayout):
     def __init__(self, **kwargs):
         super(AppLayout, self).__init__(**kwargs)
         Window.bind(mouse_pos=self.update_mouse_pos)
-        with self.viewport_layout.canvas:
-            Color(1,0,0,.5, mode="rgba")
-            self.rect = Rectangle(pos=(0,0), size=(100,100))
-            self.rect.pos = (1000,500)
+        self.viewport = Viewport()
+        self.viewport.layout = self
+        self.viewport_panel_item.add_widget(self.viewport)
+
+    def load_viewport(self):
+        global project_data
+        self.viewport.clear_all()
+        for obj in project_data[self.currentscene]:
+            self.viewport.add_object(obj)
+
+    def load_build_settings(self):
+        global build_settings
+        with open(f"{self.prc_path}\\build\\build_settings.json", "r") as file:
+            build_settings = json.load(file)
 
     def update_mouse_pos(self, window, pos): self.mouse_pos = pos
     
@@ -242,23 +414,21 @@ class AppLayout(FloatLayout):
             print("[READING PROJECT]")
             print(project_data)
 
-            self.update_scenelist()
 
-
-            if len(project_data) == 0:
-                self.create_untitled_scene()
-            
-            target = ""
-            for scene in project_data:
-                target = scene
-                break
-            self.load_scene(target)
-        
+    def after_load(self, dt):
+        self.update_scenelist()
+        if len(project_data) == 0:
+            self.create_untitled_scene()      
+        target = ""
+        for scene in project_data:
+            target = scene
+            break
+        self.load_scene(target)
         deleted_objects.clear()
         for scene in project_data:
             deleted_objects[scene] = []
-
         self.load_files()
+        self.load_viewport()
 
     def update_scenelist(self):
         self.scenelist_layout.clear_widgets()
@@ -284,30 +454,92 @@ class AppLayout(FloatLayout):
         self.scene_context_menu.show()
         self.scene_focus = scene
 
+    def convert_image_name_to_path(self, name):
+        return f"{self.prc_path}\\Assets\\{name}"
 
+    def convert_absolute_to_relative_path(self,absolute_path):
+        global script_dir
+        script_path = os.path.abspath(script_dir)
+        relative_path = os.path.relpath(absolute_path, script_path)
+        return relative_path
 
     def load_properties(self, object_name):
+        global project_data
+        global script_dir
+
         self.properties_layout.clear_widgets()
         self.property_widgets.clear()
 
-
         transform = TransformLayout()
-        
-
+        posx = project_data[self.currentscene][object_name]["position"][0]
+        posy = project_data[self.currentscene][object_name]["position"][1]
+        scalex = project_data[self.currentscene][object_name]["scale"][0]
+        scaley = project_data[self.currentscene][object_name]["scale"][1]
+        transform.pos_x.text = str(posx)
+        transform.pos_y.text = str(posy)
+        transform.scale_x.text = str(scalex)
+        transform.scale_y.text = str(scaley)
 
         default = PropertyLayout()
 
-
+        image_texture = ImageTextureLayout()
+        image_texture.layout = self
+        src = project_data[self.currentscene][object_name]["img_texture"]
+        if src:
+            path = self.convert_image_name_to_path(src)
+            print(path)
+            image_texture.texture_preview.source = src
+            image_texture.texture_name.text = os.path.basename(path)
 
         self.property_widgets.append(transform)
+        self.property_widgets.append(image_texture)
         self.property_widgets.append(default)
         for widget in self.property_widgets:
             self.properties_layout.add_widget(widget)
+    
+    def apply_properties(self):
+        global project_data
+        global is_numeric
+
+        values = []
+        values.append(self.property_widgets[0].pos_x.text)
+        values.append(self.property_widgets[0].pos_y.text)
+        values.append(self.property_widgets[0].scale_x.text)
+        values.append(self.property_widgets[0].scale_y.text)
         
-        
+        for value in values:
+            if not is_numeric(value):
+                print("[ERROR] Transform values must be numbers only")
+                dialog = WarningDialog()
+                dialog.title = "Value Error"
+                dialog.warninglabel.text = "Transform values must be numbers only!"
+                dialog.open()
+                return None
+
+        project_data[self.currentscene][self.selected_object]["position"][0] = int(values[0])
+        project_data[self.currentscene][self.selected_object]["position"][1] = int(values[1])
+        project_data[self.currentscene][self.selected_object]["scale"][0] = int(values[2])
+        project_data[self.currentscene][self.selected_object]["scale"][1] = int(values[3])
+
+        img = self.property_widgets[1].texture_name.text
+        if img != "No Texture Assigned":
+            project_data[self.currentscene][self.selected_object]["img_texture"] = img
+
+
+        self.load_properties(self.selected_object)
+        self.load_viewport()
+                
+    def assign_image_texture(self):
+        name = self.get_selected_file()
+        if name:
+            image_path = self.convert_image_name_to_path(name)
+            self.property_widgets[1].texture_preview.source = image_path
+            self.property_widgets[1].texture_name.text = name
+            print(image_path)
 
     def load_files(self):
         self.file_manager.clear_widgets()
+        self.file_widgets.clear()
 
         project_dict = {}
         with open(f"{self.prc_path}\\project.json", "r") as file:
@@ -317,7 +549,6 @@ class AppLayout(FloatLayout):
         self.project_dict = project_dict
 
         #loading files into file manager
-        self.file_widgets = []
         for i in self.files:
             file = File()
             file.root_link = self
@@ -358,6 +589,7 @@ class AppLayout(FloatLayout):
         for widget in self.file_widgets:
             if widget.selected:
                 return widget.text
+        return None
 
     def delete_file(self):
         name = self.get_selected_file()
@@ -467,6 +699,7 @@ class AppLayout(FloatLayout):
             if len(widgets) >= 1:
                 widgets[0].selected = True
                 widgets[0].visual_update()
+                self.selected_object = widgets[0].text
             for widget in widgets:
                 self.scenetree_layout.add_widget(widget)
             self.scenetree_temp = widgets.copy()
@@ -491,11 +724,11 @@ class AppLayout(FloatLayout):
     def check_object_dialog(self, instance):
         name = self.dialog.get_input()
         if name != "" and name not in project_data[self.currentscene]:
-            project_data[self.currentscene][name] = {"position":[0,0],"scale":[100,100]}
+            project_data[self.currentscene][name] = {"position":[0,0],"scale":[100,100],"img_texture":None}
             self.app_link.title = f"Artix Editor > \"{prc_name}\"      | <v.1.0-beta>*"
             self.load_scene(self.currentscene)
         elif name != "" and name in project_data[self.currentscene]:
-            project_data[self.currentscene][name+"1"] = {"position":[0,0],"scale":[100,100]}
+            project_data[self.currentscene][name+"1"] = {"position":[0,0],"scale":[100,100],"img_texture":None}
             self.app_link.title = f"Artix Editor > \"{prc_name}\"      | <v.1.0-beta>*"
             self.load_scene(self.currentscene)
 
@@ -540,13 +773,16 @@ class EditorApp(App):
         self.title = f"Artix Editor > \"{prc_name}\"      | <v.1.0-beta>"
 
     def build(self):
+        self.setup_layout()
+        os.chdir(f"{self.prc_path}\\Assets\\")
         Window.clearcolor = (50/255, 50/255, 50/255, 1)
         #Window.fullscreen = 'auto'
         Window.maximize()
         self.layout = AppLayout()
         self.layout.app_link = self
-        self.setup_layout()
         self.layout.load_project(self.prc_name, self.prc_path)
+        self.layout.load_build_settings()
+        Clock.schedule_once(self.layout.after_load, 0)
         return self.layout
 
     def setup_layout(self):

@@ -1,0 +1,57 @@
+<ImageTextureLayout>:
+    texture_preview: property_texture_preview
+    texture_name: porperty_texture_name
+
+    canvas.before:
+        Color:
+            rgba: 60/255,60/255,60/255,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    size_hint_y: None
+    height: 150
+
+    #headbar
+    FloatLayout:
+        size_hint: 1,0.2
+        pos_hint: {"x":0,"top":1}
+        canvas.before:
+            Color:
+                rgba: 74/255, 100/255, 143/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            text: "Image Texture"
+            pos_hint: {"x":0,"y":0}
+            size_hint: 1,1
+            font_size: 15
+
+    Image:
+        id: property_texture_preview
+        src: "kivy/img/white.png"
+        size_hint: 0.3,0.7
+        pos_hint: {"x":0.025,"y":0.05}
+    
+    FloatLayout
+        size_hint: 0.7,0.2
+        pos_hint: {"x":0.325,"y":0.55}
+        canvas.before:
+            Color:
+                rgba: 50/255, 50/255, 50/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            id: porperty_texture_name
+            text: "No Texture Assigned"
+            font_size: 20
+            size_hint: 1,1
+            pos_hint: {"x":0,"y":0}
+    
+    Button:
+        text: "Assign"
+        size_hint: 0.7,0.5
+        pos_hint: {"x":0.325,"y":0.05}
+        on_press: root.layout.assign_image_texture()
+

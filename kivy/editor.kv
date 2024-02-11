@@ -1,3 +1,18 @@
+<WarningDialog>:
+    warninglabel: kv_warninglabel    
+
+    title: "Warning"
+    size_hint: 0.42,0.3
+    auto_dismiss: False
+    GridLayout:
+        cols: 1
+        Label:
+            id: kv_warninglabel
+            text: "This is a warning!"
+        Button:
+            text: "Close"
+            on_press: root.dismiss()
+
 <InputDialog>:
     label: kv_input_label
     cancel_button: kv_input_cancel_button
@@ -102,14 +117,15 @@
     background_color: 125/255,125/255,125/255,1
 
 
+
 <AppLayout>:
-    viewport_layout: kv_viewport_layout
     scenetree_layout: kv_scenetree_layout
     scenelist_layout: kv_scenelist_layout
     scene_name_label: kv_scene_name_label
     file_manager: kv_file_manager
     properties_layout: kv_properties_layout
     scene_context_menu: kv_scene_context_menu
+    viewport_panel_item: kv_viewport_panel_item
      
     id: layout
 
@@ -122,16 +138,7 @@
         TabbedPanelItem:
             text: "Viewport"
             font_size: 20
-            FloatLayout:
-                id: kv_viewport_layout
-                canvas.before:
-                    Color:
-                        rgba: 255/255,255/255,255/255,1
-                    Rectangle:
-                        pos: self.pos
-                        size: self.size
-              
-                
+            id: kv_viewport_panel_item
                 
         TabbedPanelItem:
             text: "Scripting"
@@ -295,11 +302,15 @@
             pos_hint: {"x": 0.575, "y": 0.1}
             size_hint: 0.4,0.7
             font_size: 20
+            on_press: root.apply_properties()
             
 
 
     #Properties Panel
     ScrollView:
+        do_scroll_x: False
+        do_scroll_y: False
+
         size_hint: 0.20,0.9
         pos_hint: {"x": 0.80}
         canvas.before:

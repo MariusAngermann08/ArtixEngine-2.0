@@ -1,4 +1,9 @@
 <TransformLayout>:
+    pos_x: property_pos_x
+    pos_y: property_pos_y
+    scale_x: property_scale_x
+    scale_y: property_scale_y
+    
     canvas.before:
         Color:
             rgba: 60/255,60/255,60/255,1
@@ -41,9 +46,11 @@
             font_size: 20
         
         TextInput:
+            id: property_pos_x
             size_hint: 0.2,1
             pos_hint: {"x":0.35, "y":0}
             text: "0.0"
+            multiline: False
 
         Label:
             canvas.before:
@@ -58,9 +65,11 @@
             font_size: 15
 
         TextInput:
+            id: property_pos_y
             size_hint: 0.2,1
             pos_hint: {"x":0.7, "y":0}
             text: "0.0"
+            multiline: False
 
         Label:
             canvas.before:
@@ -91,9 +100,11 @@
             font_size: 20
         
         TextInput:
+            id: property_scale_x
             size_hint: 0.2,1
             pos_hint: {"x":0.35, "y":0}
             text: "0.0"
+            multiline: False
 
         Label:
             canvas.before:
@@ -108,9 +119,11 @@
             font_size: 15
 
         TextInput:
+            id: property_scale_y
             size_hint: 0.2,1
             pos_hint: {"x":0.7, "y":0}
             text: "0.0"
+            multiline: False
 
         Label:
             canvas.before:

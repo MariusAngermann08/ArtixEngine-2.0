@@ -102,7 +102,7 @@ class ProjectDialog(Popup):
         build_dir = project_dir+"\\build"
         os.mkdir(build_dir)
         with open(build_dir+"\\build_settings.json", "w") as build_file:
-            json.dump({}, build_file)
+            json.dump({"resolution":[800,600]}, build_file)
         os.mkdir(build_dir+"\\python-build")
         os.mkdir(build_dir+"\\standalone-build")
         
