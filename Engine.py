@@ -182,6 +182,14 @@ class Engine:
 				self.position.x += vector[0]
 				self.position.y += vector[1]
 
+		def set_position(self, vector=[0,0]):
+			if self.physics:
+				self.physics_body.body.position = pymunk.Vec2d(vector[0], vector[1])
+				# Update the shape's position as well
+				self.physics_body.position = pymunk.Vec2d(vector[0], vector[1])
+			else:
+				self.position.set(vector)
+
 		def addAttribute(self, att_type, att_settings={"mass":1,"inertia":100,"physics_type":"dynamic","collider":"box"}):
 			if att_type == "PhysicsObject":
 				self.mass = att_settings["mass"]

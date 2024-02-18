@@ -1097,7 +1097,7 @@ class AppLayout(FloatLayout):
             widgets.clear()
             if len(self.scenetree_temp) > 0:
                 self.load_properties(self.scenetree_temp[0].text)
-                
+            self.load_viewport()
 
         else:
             print(f"[ERROR] Scene <{name}> doesnt exist")
