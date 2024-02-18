@@ -58,6 +58,8 @@ Builder.load_file("kivy/properties/scripts.kv")
 #Load Tabs
 Builder.load_file("kivy/tabs/scripting.kv")
 
+#Load Special Widgets
+Builder.load_file("kivy/special_widgets/visual_script_editor.kv")
 
 prc_name = ""
 
@@ -82,6 +84,14 @@ pre_method_code = [
     "\tdef on_exit(self):\n",
     "\t\tpass\n\n"
 ]
+
+pre_xml_code = [
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n",
+    "<eventsystem>\n",
+    "</eventsystem>\n"
+]
+
+event_list = ["engine.key_pressed","engine.key_hold"]
 
 
 project_data = {}
@@ -215,6 +225,8 @@ class Viewport(RelativeLayout):
     last_mouse_pos = None
     current_mouse_pos = None
 
+    corner_markers = []
+
 
     def __init__(self, **kwargs):
         super(Viewport, self).__init__(**kwargs)
@@ -280,6 +292,57 @@ class Viewport(RelativeLayout):
 
         self.object_widgets.append(scatter)
         self.stencil_view.add_widget(scatter)
+
+    def add_corner_markers(self):
+        global build_settings
+        global script_dir
+
+        self.corner_markers.clear()
+
+        scatter1 = Scatter()
+        img1 = Image(source=f"{script_dir}\\kivy\\corner_markers\\left_top.png")
+        img1.width = 35
+        img1.height = 35
+        scatter1.width = 35
+        scatter1.height = 35
+        scatter1.add_widget(img1)
+        scatter1.pos = (0+self.display_offset[0],build_settings["resolution"][1]-35+self.display_offset[1])
+        #self.stencil_view.add_widget(scatter1)
+
+        scatter2 = Scatter()
+        img2 = Image(source=f"{script_dir}\\kivy\\corner_markers\\left_bottom.png")
+        img2.width = 35
+        img2.height = 35
+        scatter2.width = 35
+        scatter2.height = 35
+        scatter2.add_widget(img2)
+        scatter2.pos = (0+self.display_offset[0],0+self.display_offset[1])
+        #self.stencil_view.add_widget(scatter2)
+
+        scatter3 = Scatter()
+        img3 = Image(source=f"{script_dir}\\kivy\\corner_markers\\right_top.png")
+        img3.width = 35
+        img3.height = 35
+        scatter3.width = 35
+        scatter3.height = 35
+        scatter3.add_widget(img3)
+        scatter3.pos = (build_settings["resolution"][0]-35+self.display_offset[0],build_settings["resolution"][1]-35+self.display_offset[1])
+        #self.stencil_view.add_widget(scatter3)
+
+        scatter4 = Scatter()
+        img4 = Image(source=f"{script_dir}\\kivy\\corner_markers\\right_bottom.png")
+        img4.width = 35
+        img4.height = 35
+        scatter4.width = 35
+        scatter4.height = 35
+        scatter4.add_widget(img4)
+        scatter4.pos = (build_settings["resolution"][0]+self.display_offset[0],0+self.display_offset[1])
+        #self.stencil_view.add_widget(scatter4)
+
+        #self.corner_markers.append(scatter1)
+        #self.corner_markers.append(scatter2)
+        #self.corner_markers.append(scatter3)
+        #self.corner_markers.append(scatter4)
 
     def clear_all(self):
         self.stencil_view.clear_widgets()
@@ -403,6 +466,81 @@ class ToggleButtonGroup:
     def add_widget(self, button):
         self.buttons.append(button)
 
+class EventSelector(Popup):
+    layout = None
+    event_widgets = []
+    def __init__(self, **kwargs):
+        super(EventSelector, self).__init__(**kwargs)
+        self.size_hint = (0.2,0.5)
+        self.auto_dismiss = True
+        self.title = "Selector"
+        
+        self.floatlayout = FloatLayout()
+        self.add_widget(self.floatlayout)
+
+        self.scrollview = ScrollView()
+        self.scrollview.size_hint = (0.8,0.875)
+        self.scrollview.pos_hint = {"x":0.1,"top":1}
+        with self.scrollview.canvas.before:
+            Color(35/255,35/255,35/255,1)
+            self.bg_rect = Rectangle(pos=self.pos,size=self.size)
+        self.scrollview.bind(pos=self.update_bg_rect,size=self.update_bg_rect)
+        self.floatlayout.add_widget(self.scrollview)
+
+        self.gridlayout = GridLayout()
+        self.gridlayout.size_hint_y = None
+        self.gridlayout.spacing = 0
+        self.gridlayout.height = self.gridlayout.minimum_height
+        self.gridlayout.cols = 1
+        self.scrollview.add_widget(self.gridlayout)
+
+        self.button = Button(text="Add")
+        self.button.font_size = 20
+        self.button.size_hint = (0.4,0.1)
+        self.button.pos_hint = {"x":0.3,"y":0}
+        self.floatlayout.add_widget(self.button)
+
+        self.group = ToggleButtonGroup()
+        self.load_event_list()
+
+    def load_event_list(self):
+        global event_list
+        self.event_widgets.clear()
+        for item in event_list:
+            togglebutton = ToggleButton(group=self.group)
+            togglebutton.size_hint_y = None
+            togglebutton.height = 40
+            togglebutton.text = item
+            self.gridlayout.add_widget(togglebutton)
+            self.event_widgets.append(togglebutton)
+
+
+
+    def update_bg_rect(self, instance, value):
+        self.bg_rect.pos = instance.pos
+        self.bg_rect.size = instance.size
+
+class VisualScriptEditor(FloatLayout):
+    def __init__(self, **kwargs):
+        super(VisualScriptEditor, self).__init__(**kwargs)
+        self.size_hint = (0.75,0.875)
+        with self.canvas.before:
+            Color(69/255, 69/255, 71/255,1)
+            self.rect = Rectangle(pos=self.pos,size=self.size)
+        self.bind(pos=self.update_rect,size=self.update_rect)
+    def update_rect(self, instance, value):
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size
+    def open_event_select(self):
+        self.selector = EventSelector()
+        self.selector.layout = self
+        self.selector.bind(on_dismiss=self.check_event_select)
+        self.selector.open()
+    def check_event_select(self, instance):
+        pass
+
+    
+
 
 class ScriptingTab(FloatLayout):
     scrollview = ObjectProperty()
@@ -426,14 +564,31 @@ class ScriptingTab(FloatLayout):
         self.codeinput.size_hint = (0.75,0.88)
         self.codeinput.pos_hint = {"x":0.25,"y":0.05}
         self.codeinput.font_size = 20
-        self.add_widget(self.codeinput)
+        #self.add_widget(self.codeinput)
+
+        self.vscriptedit = VisualScriptEditor()
+        self.vscriptedit.pos_hint = {"x":0.25,"y":0.05}
     
     def load_python_script(self, name):
+        if self.vscriptedit in self.children:
+            self.remove_widget(self.vscriptedit)
+        if not self.codeinput in self.children:
+            self.add_widget(self.codeinput)
         path = f"{self.layout.prc_path}\\Assets\\{name}"
         content = ""
         with open(path, "r") as file:
             content = file.read()
         self.codeinput.text = content
+    
+    def load_visual_script(self, name):
+        if self.codeinput in self.children:
+            self.remove_widget(self.codeinput)
+        if not self.vscriptedit in self.children:
+            self.add_widget(self.vscriptedit)
+        path = f"{self.layout.prc_path}\\Assets\\{name}"
+        content = ""
+        with open(path, "r") as file:
+            content = file.read()
 
     def save_python_script(self):
         path = f"{self.layout.prc_path}\\Assets\\{self.selected_file}"
@@ -479,7 +634,10 @@ class ScriptingTab(FloatLayout):
     def update_selected(self, instance, value):
         if value == "down":
             self.selected_file = instance.text
-            self.load_python_script(self.selected_file)
+            if self.selected_file.endswith(".py"):
+                self.load_python_script(self.selected_file)
+            elif self.selected_file.endswith(".xml"):
+                self.load_visual_script(self.selected_file)
 
 
 
@@ -523,6 +681,7 @@ class AppLayout(FloatLayout):
     def load_viewport(self):
         global project_data
         self.viewport.clear_all()
+        self.viewport.add_corner_markers()
         for obj in project_data[self.currentscene]:
             self.viewport.add_object(obj)
 
@@ -791,7 +950,25 @@ class AppLayout(FloatLayout):
             self.update_project_file()
             self.scripting.update_file_list()
 
-            
+    def create_visual_script(self):
+        self.vfile_dialog = InputDialog()
+        self.vfile_dialog.title = "Create Visual Script"
+        self.vfile_dialog.label.text = "Script Name:"
+        self.vfile_dialog.submit_button.text = "Create"
+        self.vfile_dialog.bind(on_dismiss=self.check_vfile_dialog)
+        self.vfile_dialog.open()
+
+    def check_vfile_dialog(self, instance):
+        global pre_xml_code
+        name = self.vfile_dialog.get_input()
+        if name != "" and not name in self.files:
+            with open(f"{self.prc_path}\\Assets\\{name}.xml", "w") as file:
+                for line in pre_xml_code:
+                    file.write(line)
+            self.files.append(name+".xml")
+            self.update_project_file()
+            self.scripting.update_file_list()
+
     def update_project_file(self):
         self.project_dict["registered_files"] = self.files
         with open(f"{self.prc_path}\\project.json", "w") as file:
