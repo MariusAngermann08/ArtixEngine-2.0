@@ -38,6 +38,11 @@ from plyer import filechooser
 from kivy.uix.relativelayout import RelativeLayout
 import keyboard
 from pynput.mouse import Controller#, Button
+from distutils.dir_util import copy_tree
+import builder
+import subprocess
+from kivy.uix.dropdown import DropDown
+from kivy.uix.togglebutton import ToggleButton
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 print(script_dir)
@@ -47,6 +52,12 @@ Builder.load_file("kivy/editor.kv")
 Builder.load_file("kivy/properties/property.kv")
 Builder.load_file("kivy/properties/transform.kv")
 Builder.load_file("kivy/properties/image_texture.kv")
+Builder.load_file("kivy/properties/physics.kv")
+Builder.load_file("kivy/properties/scripts.kv")
+
+#Load Tabs
+Builder.load_file("kivy/tabs/scripting.kv")
+
 
 prc_name = ""
 
@@ -61,7 +72,16 @@ project_data_example = {
     }
 }
 
-
+pre_method_code = [
+    "\tdef __init__(self, engine, scene, object):\n",
+    "\t\tsuper().__init__(engine, scene, object)\n\n",
+    "\tdef on_init(self):\n",
+    "\t\tpass\n\n",
+    "\tdef update(self):\n",
+    "\t\tpass\n\n",
+    "\tdef on_exit(self):\n",
+    "\t\tpass\n\n"
+]
 
 
 project_data = {}
@@ -103,6 +123,42 @@ class ImageTextureLayout(FloatLayout):
     def __init__(self, **kwargs):
         super(ImageTextureLayout,self).__init__(**kwargs)
 
+class PhysicsLayout(FloatLayout):
+    mass_input = ObjectProperty()
+    physics_main_switch = ObjectProperty()
+    static_state_switch = ObjectProperty()
+
+    layout = None
+    def __init__(self, **kwargs):
+        super(PhysicsLayout, self).__init__(**kwargs)
+
+class ScriptsLayout(FloatLayout):
+    scripts_grid = ObjectProperty()
+    layout = None
+    selected_script = None
+    def __init__(self, **kwargs):
+        super(ScriptsLayout, self).__init__(**kwargs)
+    def stop_deselection(self, instance, **kwargs):
+        for widget in self.scripts_grid.children:
+            if widget.text == instance.text:
+                widget.state = "down"
+                break
+    def update_selected(self, instance, value):
+        if instance.state == "down":
+            self.selected_script = instance.text
+    def add_script(self):
+        global project_data
+        scriptdict = project_data[self.layout.currentscene][self.layout.selected_object]["scripts"].copy()
+        selected = self.layout.get_selected_file()
+        if not selected in scriptdict:
+            if selected.endswith(".py") or selected.endswith(".xml"):
+                project_data[self.layout.currentscene][self.layout.selected_object]["scripts"].append(selected)
+                self.layout.load_properties(self.layout.selected_object)
+    def remove_script(self):
+        global project_data
+        if self.selected_script:
+            project_data[self.layout.currentscene][self.layout.selected_object]["scripts"].remove(self.selected_script)
+            self.layout.load_properties(self.layout.selected_object)
 
 class RoundedButton(Button):
     scene_mode = False
@@ -132,14 +188,21 @@ class InputDialog(Popup):
 class ImageScatter(Scatter):
     viewport = None
     name = None
-    def __init__(self, source,**kwargs):
+    def __init__(self, source, **kwargs):
         super(ImageScatter, self).__init__(**kwargs)
         self.image = Image(source=source)
+        self.image.allow_stretch = True
+        self.image.keep_ratio = False
         self.add_widget(self.image)
+        self.bind(size=self.update_image)
+    def update_image(self, instance, value):
+        self.image.width = self.width
+        self.image.height = self.height
     def on_touch_up(self, touch):
         if self.collide_point(*touch.pos):
             self.viewport.update_object_position(self.name)
         return super().on_touch_up(touch)
+
 
 class Viewport(RelativeLayout):
     layout = None
@@ -161,10 +224,8 @@ class Viewport(RelativeLayout):
             Color(self.bg_color[0]/255,self.bg_color[1]/255,self.bg_color[2]/255,1)  # RGBA values (red, green, blue, alpha)
             self.rect = Rectangle(pos=self.pos, size=self.size)
 
-        #Add Later
-        #self.offset_label = Label(text="No Offset")
-        #self.offset_label.color = (0,0,0,1)
-        #self.add_widget(self.offset_label)
+        
+        
 
         self.stencil_view = StencilView(size_hint=(1,1))
         self.add_widget(self.stencil_view)
@@ -174,7 +235,12 @@ class Viewport(RelativeLayout):
         self.bind(size=self.update_rect)
         Window.bind(on_touch_down=self.mouse_down)
         Window.bind(on_touch_up=self.mouse_up)
-        
+
+    def add_offset_label(self):
+        #self.offset_label = Label(text="No Offset")
+        #self.offset_label.color = (0,0,0,1)
+        #self.layout.add_widget(self.offset_label)
+        pass
 
     def update_rect(self, instance, value):
         # Update the background color when the size changes
@@ -184,6 +250,8 @@ class Viewport(RelativeLayout):
 
     def add_object(self,name):
         global project_data
+        global build_settings
+
 
         #getting values from project data
         path = self.layout.convert_image_name_to_path(project_data[self.layout.currentscene][name]["img_texture"])
@@ -197,7 +265,7 @@ class Viewport(RelativeLayout):
         scatter.name = name
 
         #Converting values
-        posy = self.height - posy
+        posy = build_settings["resolution"][1] - posy
 
         #Calculate offsets
         posx += self.display_offset[0]
@@ -212,10 +280,11 @@ class Viewport(RelativeLayout):
 
         self.object_widgets.append(scatter)
         self.stencil_view.add_widget(scatter)
-    
+
     def clear_all(self):
         self.stencil_view.clear_widgets()
         self.object_widgets.clear()
+
 
     def mouse_down(self, instance, touch):
         if touch.button == "middle":
@@ -253,17 +322,13 @@ class Viewport(RelativeLayout):
             #posy -= target.height/2
             #Converting values
             posy = build_settings["resolution"][1] - posy
-            project_data[self.layout.currentscene][name]["position"] = [posx,posy]
+            fixed_x = str(posx).split(".")[0]
+            fixed_y = str(posy).split(".")[0]
+            project_data[self.layout.currentscene][name]["position"] = [int(fixed_x),int(fixed_y)]
 
             self.layout.load_viewport()
             self.layout.load_properties(self.layout.selected_object)
         
-
-            
-    
-    
-
-
 
 
 class GameObject(Button):
@@ -330,7 +395,92 @@ class File(FloatLayout):
             else:
                 self.icon.background_normal = f"{script_dir}\\kivy\\icon\\image.png"
                 self.icon.background_down = f"{script_dir}\\kivy\\icon\\image_selected.png"
-                
+
+class ToggleButtonGroup:
+    def __init__(self):
+        self.buttons = []
+
+    def add_widget(self, button):
+        self.buttons.append(button)
+
+
+class ScriptingTab(FloatLayout):
+    scrollview = ObjectProperty()
+    selected_file = None
+    layout = None
+    script_list_widgets = []
+    def __init__(self, **kwargs):
+        super(ScriptingTab, self).__init__(**kwargs)
+        self.file_grid = GridLayout()
+        self.file_grid.size_hint_y = None
+        self.file_grid.cols = 1
+        self.file_grid.spacing = 0
+        with self.scrollview.canvas.before:
+            Color(54/255,54/255,54/255,1)
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+        self.scrollview.bind(pos=self.update_background_rect,size=self.update_background_rect)
+        self.scrollview.add_widget(self.file_grid)
+
+        self.codeinput = CodeInput()
+        self.codeinput.tab_width = 4
+        self.codeinput.size_hint = (0.75,0.88)
+        self.codeinput.pos_hint = {"x":0.25,"y":0.05}
+        self.codeinput.font_size = 20
+        self.add_widget(self.codeinput)
+    
+    def load_python_script(self, name):
+        path = f"{self.layout.prc_path}\\Assets\\{name}"
+        content = ""
+        with open(path, "r") as file:
+            content = file.read()
+        self.codeinput.text = content
+
+    def save_python_script(self):
+        path = f"{self.layout.prc_path}\\Assets\\{self.selected_file}"
+        with open(path, "w") as file:
+            file.write(self.codeinput.text)
+
+    def update_background_rect(self, instance, value):
+        self.rect.size = instance.size
+        self.rect.pos = instance.pos
+
+    def update_file_list(self):
+        self.file_grid.clear_widgets()
+        self.selected_file = None
+        self.script_list_widgets.clear()
+        script_list = []
+        for item in self.layout.files: 
+            if item.endswith(".py") or item.endswith(".xml"):
+                script_list.append(item)
+
+        group = ToggleButtonGroup()
+
+        for script in script_list:
+            togglebutton = ToggleButton(text=script,group=group)
+            togglebutton.text = script
+            togglebutton.size_hint_y = None
+            togglebutton.height = 40
+            togglebutton.bind(state=self.update_selected)
+            togglebutton.bind(on_press=self.stop_deselection)
+            self.file_grid.add_widget(togglebutton)
+            self.script_list_widgets.append(togglebutton)
+        
+        if len(self.script_list_widgets) > 0:
+            self.script_list_widgets[0].state = "down"
+            self.selected_file = self.script_list_widgets[0].text
+
+    def stop_deselection(self, instance, **kwargs):
+        for widget in self.script_list_widgets:
+            if widget.text == instance.text:
+                widget.state = "down"
+                self.selected_file = widget.text
+                break
+
+    def update_selected(self, instance, value):
+        if value == "down":
+            self.selected_file = instance.text
+            self.load_python_script(self.selected_file)
+
 
 
 
@@ -343,6 +493,7 @@ class AppLayout(FloatLayout):
     properties_layout = ObjectProperty()
     scene_context_menu = ObjectProperty()
     viewport_panel_item = ObjectProperty()
+    scripting_panel_item = ObjectProperty()
 
     selected = None
     currentscene = ""
@@ -362,7 +513,12 @@ class AppLayout(FloatLayout):
         Window.bind(mouse_pos=self.update_mouse_pos)
         self.viewport = Viewport()
         self.viewport.layout = self
+        self.viewport.add_offset_label()
         self.viewport_panel_item.add_widget(self.viewport)
+
+        self.scripting = ScriptingTab()
+        self.scripting.layout = self
+        self.scripting_panel_item.add_widget(self.scripting)
 
     def load_viewport(self):
         global project_data
@@ -429,6 +585,7 @@ class AppLayout(FloatLayout):
             deleted_objects[scene] = []
         self.load_files()
         self.load_viewport()
+        self.scripting.update_file_list()
 
     def update_scenelist(self):
         self.scenelist_layout.clear_widgets()
@@ -480,8 +637,6 @@ class AppLayout(FloatLayout):
         transform.scale_x.text = str(scalex)
         transform.scale_y.text = str(scaley)
 
-        default = PropertyLayout()
-
         image_texture = ImageTextureLayout()
         image_texture.layout = self
         src = project_data[self.currentscene][object_name]["img_texture"]
@@ -491,9 +646,35 @@ class AppLayout(FloatLayout):
             image_texture.texture_preview.source = src
             image_texture.texture_name.text = os.path.basename(path)
 
+        physics = PhysicsLayout()
+        physics.layout = self
+        physics.physics_main_switch.active = project_data[self.currentscene][object_name]["PhysicsObject"][0]
+        physics.mass_input.text = str(project_data[self.currentscene][object_name]["PhysicsObject"][1])
+        physics_type = project_data[self.currentscene][object_name]["PhysicsObject"][3]
+        if physics_type == "static": physics.static_state_switch.active = True
+        
+        scripts = ScriptsLayout()
+        scripts.layout = self
+        btnlist = []
+        group = ToggleButtonGroup()
+        for script in project_data[self.currentscene][object_name]["scripts"]:
+            togglebutton = ToggleButton(text=script,group=group)
+            togglebutton.size_hint_y = None
+            togglebutton.height = 40
+            togglebutton.bind(state=scripts.update_selected)
+            togglebutton.bind(on_press=scripts.stop_deselection)
+            scripts.scripts_grid.add_widget(togglebutton)
+            btnlist.append(togglebutton)
+
+        if len(btnlist) > 0:
+            btnlist[0].state = "down"
+            scripts.selected_script = btnlist[0].text
+
+
         self.property_widgets.append(transform)
         self.property_widgets.append(image_texture)
-        self.property_widgets.append(default)
+        self.property_widgets.append(physics)
+        self.property_widgets.append(scripts)
         for widget in self.property_widgets:
             self.properties_layout.add_widget(widget)
     
@@ -524,6 +705,17 @@ class AppLayout(FloatLayout):
         img = self.property_widgets[1].texture_name.text
         if img != "No Texture Assigned":
             project_data[self.currentscene][self.selected_object]["img_texture"] = img
+
+        physics_switch_value = self.property_widgets[2].physics_main_switch.active
+        project_data[self.currentscene][self.selected_object]["PhysicsObject"][0] = physics_switch_value
+        mass_value = self.property_widgets[2].mass_input.text
+        project_data[self.currentscene][self.selected_object]["PhysicsObject"][1] = mass_value
+        static_switch_value = self.property_widgets[2].static_state_switch.active
+        if static_switch_value: project_data[self.currentscene][self.selected_object]["PhysicsObject"][3] = "static"
+        else: project_data[self.currentscene][self.selected_object]["PhysicsObject"][3] = "dynamic"
+
+
+
 
 
         self.load_properties(self.selected_object)
@@ -578,7 +770,28 @@ class AppLayout(FloatLayout):
             shutil.copy(selected_file[0],self.prc_path+f"\\Assets\\{file_name}")
             self.files.append(file_name)
             self.update_project_file()
+    
+    def create_python_file(self):
+        self.pfile_dialog = InputDialog()
+        self.pfile_dialog.title = "Create Python Script"
+        self.pfile_dialog.label.text = "Script Name:"
+        self.pfile_dialog.submit_button.text = "Create"
+        self.pfile_dialog.bind(on_dismiss=self.check_pfile_dialog)
+        self.pfile_dialog.open()
 
+    def check_pfile_dialog(self, instance):
+        global pre_method_code
+        name = self.pfile_dialog.get_input()
+        if name != "" and not name in self.files:
+            with open(f"{self.prc_path}\\Assets\\{name}.py", "w") as file:
+                file.write(f"class {name}(engine.Method):\n")
+                for line in pre_method_code:
+                    file.write(line)
+            self.files.append(name+".py")
+            self.update_project_file()
+            self.scripting.update_file_list()
+
+            
     def update_project_file(self):
         self.project_dict["registered_files"] = self.files
         with open(f"{self.prc_path}\\project.json", "w") as file:
@@ -599,6 +812,7 @@ class AppLayout(FloatLayout):
         if os.path.exists(path):
             os.remove(path)
         self.update_project_file()
+        self.scripting.update_file_list()
 
     def delete_object(self):
         global project_data
@@ -724,11 +938,11 @@ class AppLayout(FloatLayout):
     def check_object_dialog(self, instance):
         name = self.dialog.get_input()
         if name != "" and name not in project_data[self.currentscene]:
-            project_data[self.currentscene][name] = {"position":[0,0],"scale":[100,100],"img_texture":None}
+            project_data[self.currentscene][name] = {"position":[0,0],"scale":[100,100],"PhysicsObject": [False,1,100,"dynamic","box"],"img_texture":None,"scripts":[]}
             self.app_link.title = f"Artix Editor > \"{prc_name}\"      | <v.1.0-beta>*"
             self.load_scene(self.currentscene)
         elif name != "" and name in project_data[self.currentscene]:
-            project_data[self.currentscene][name+"1"] = {"position":[0,0],"scale":[100,100],"img_texture":None}
+            project_data[self.currentscene][name+"1"] = {"position":[0,0],"scale":[100,100],"PhysicsObject": [False,1,100,"dynamic","box"],"img_texture":None,"scripts":[]}
             self.app_link.title = f"Artix Editor > \"{prc_name}\"      | <v.1.0-beta>*"
             self.load_scene(self.currentscene)
 
@@ -750,8 +964,30 @@ class AppLayout(FloatLayout):
             self.load_scene[name+1]
         self.update_scenelist()
 
-        
-
+    def build_project(self):
+        project_path = self.prc_path
+        output_path = f"{project_path}\\build\\python-build" 
+        BuilderInstance = builder.Builder(project_path, output_path)
+        BuilderInstance.mode = "launch"
+        BuilderInstance.build()
+        os.chdir(f"{self.prc_path}\\Assets\\")
+    
+    def launch_project(self):
+        global script_dir
+        self.apply_properties()
+        self.save_project()
+        self.build_project()
+        source_dir = f"{self.prc_path}\\build\\python-build"
+        final_dir = f"{script_dir}\\launch"
+        copy_tree(source_dir, final_dir)
+        try:
+            python_executable = sys.executable
+            subprocess.Popen([python_executable, f"{script_dir}\\launch\\main.py"])
+        except:
+            dialog = WarningDialog()
+            dialog.title = "Build Error"
+            dialog.warninglabel.text = "Cant build with python because its not installed. Change build settings to use Executable-Build."
+            dialog.open()
 
     def clear_select(self, exception=None):
         for widget in self.scenetree_temp:
@@ -776,6 +1012,7 @@ class EditorApp(App):
         self.setup_layout()
         os.chdir(f"{self.prc_path}\\Assets\\")
         Window.clearcolor = (50/255, 50/255, 50/255, 1)
+        #Window.set_system_cursor('hand')
         #Window.fullscreen = 'auto'
         Window.maximize()
         self.layout = AppLayout()

@@ -1,0 +1,60 @@
+<ScriptingTab>:
+    scrollview: tab_scrollview
+
+    #Headbar
+    FloatLayout:
+        canvas.before:
+            Color:
+                rgba: 25/255,25/255,25/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        size_hint: 0.25,0.075
+        pos_hint: {"x":0,"y":0.925}
+
+        Label:
+            text: "Script Files:"
+            size_hint: 0.5,1
+            pos_hint: {"x":0,"y":0}
+            font_size: 20
+        
+        Button:
+            size_hint: 0.4,1
+            pos_hint: {"x":0.6,"y":0}
+            text: "Delete"
+            background_color: 186/255, 93/255, 86/255, 1
+
+    #headbar extension
+    FloatLayout:
+        canvas.before:
+            Color:
+                rgba: 25/255,25/255,25/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        size_hint: 0.75,0.075
+        pos_hint: {"x":0.25,"y":0.925}
+    
+    #Toolbar
+    FloatLayout:
+        canvas.before:
+            Color:
+                rgba: 75/255,75/255,75/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        size_hint: 0.75,0.05
+        pos_hint: {"x":0.25,"y":0}
+
+        Button:
+            size_hint: 0.125,1
+            pos_hint: {"x":0,"y":0}
+            text: "Save"
+            background_color: 95/255,148/255,103/255,1
+            font_size: 20
+            on_press: root.save_python_script()
+
+    ScrollView:
+        id: tab_scrollview
+        size_hint: 0.25,0.925
+        pos_hint: {"x":0,"y":0}

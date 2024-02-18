@@ -93,7 +93,7 @@ class Engine:
 		rect2 = obj2.surface.get_rect()
 		rect1.x, rect1.y = obj1.getRectPos()[0], obj1.getRectPos()[1]
 		rect2.x, rect2.y = obj2.getRectPos()[0], obj2.getRectPos()[1]
-		if rect1.collide_rect(rect2):
+		if rect1.colliderect(rect2):
 			return True
 		else:
 			return False
@@ -175,10 +175,13 @@ class Engine:
 			if self.physics:
 				new_x = self.physics_body.body.position.x + vector[0]
 				new_y = self.physics_body.body.position.y + vector[1]
-				self.physics_body.body.position = pymunk.Vec2d(new_x,new_y)	
+				self.physics_body.body.position = pymunk.Vec2d(new_x, new_y)
+				# Update the shape's position as well
+				self.physics_body.position = pymunk.Vec2d(new_x, new_y)
 			else:
 				self.position.x += vector[0]
 				self.position.y += vector[1]
+
 		def addAttribute(self, att_type, att_settings={"mass":1,"inertia":100,"physics_type":"dynamic","collider":"box"}):
 			if att_type == "PhysicsObject":
 				self.mass = att_settings["mass"]

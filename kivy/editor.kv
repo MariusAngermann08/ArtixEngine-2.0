@@ -126,6 +126,7 @@
     properties_layout: kv_properties_layout
     scene_context_menu: kv_scene_context_menu
     viewport_panel_item: kv_viewport_panel_item
+    scripting_panel_item: kv_scripting_panel_item
      
     id: layout
 
@@ -141,22 +142,10 @@
             id: kv_viewport_panel_item
                 
         TabbedPanelItem:
+            id: kv_scripting_panel_item
             text: "Scripting"
             font_size: 20
-            FloatLayout:
-                ScrollView:
-                    size_hint: 0.3, 1
-                    pos_hint: {"x": 0, "y":0}
-                    size_hint_y: None
-                    GridLayout:
-                        cols: 1
-                        height: self.minimum_height
-                        spacing: 10
-                        size_hint_y: None   
-                CodeInput:
-                    font_size: 20
-                    size_hint: 0.7, 1
-                    pos_hint: {"x": 0.3, "y": 0}
+                
         TabbedPanelItem:
             text: "Documentation"
             font_size: 20
@@ -164,6 +153,22 @@
                 cols: 1
                 Label:
                     text: "A easy way to access the documentation while working on your game."
+    
+    #Playbutton
+    Button:
+        background_color: 56/255, 242/255, 105/255, 1
+        text: "Play"
+        pos_hint: {"x": 0.7, "top":0.97}
+        size_hint: 0.1,0.048
+        on_press: root.launch_project()
+
+    #Attributes Button
+    Button:
+        text: "Attributes"
+        pos_hint: {"x": 0.55, "top":0.97}
+        size_hint: 0.1,0.048
+        on_press: root.launch_project()
+
 
     FloatLayout:
         canvas.before:
@@ -280,6 +285,7 @@
                 ContextMenuTextItem:
                     text: "Python File(.py)"
                     font_size: 20
+                    on_press: root.create_python_file()
     
     #Properties Headmenu
     FloatLayout:

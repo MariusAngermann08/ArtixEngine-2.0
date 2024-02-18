@@ -1,0 +1,94 @@
+<PhysicsLayout>:
+    mass_input: property_mass_input
+    physics_main_switch: property_physics_main_switch
+    static_state_switch: property_static_state_switch
+
+
+    canvas.before:
+        Color:
+            rgba: 60/255,60/255,60/255,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    size_hint_y: None
+    height: 180
+
+    #headbar
+    FloatLayout:
+        size_hint: 1,0.16
+        pos_hint: {"x":0,"top":1}
+        canvas.before:
+            Color:
+                rgba: 74/255, 100/255, 143/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            text: "Physics Settings"
+            pos_hint: {"x":0,"y":0}
+            size_hint: 1,1
+            font_size: 15
+    
+    FloatLayout
+        size_hint: 1,0.16
+        pos_hint: {"x":0,"top":0.75}
+        canvas.before:
+            Color:
+                rgba: 74/255, 74/255, 74/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            text: "Enable Physics:"
+            size_hint: 0.475,1
+            pos_hint: {"x":0, "y":0}
+            font_size: 20
+        Switch:
+            id: property_physics_main_switch
+            size_hint: 0.2,1
+            pos_hint: {"x":0.55,"y":0}
+    
+    FloatLayout
+        size_hint: 1,0.16
+        pos_hint: {"x":0,"top":0.5}
+        canvas.before:
+            Color:
+                rgba: 74/255, 74/255, 74/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        
+        Label:
+            text: "Mass:"
+            size_hint: 0.475,1
+            pos_hint: {"x":0, "y":0}
+            font_size: 20
+        
+        TextInput:
+            id: property_mass_input
+            size_hint: 0.2,1
+            pos_hint: {"x":0.55, "y":0}
+            text: "0.0"
+            multiline: False
+        
+
+    FloatLayout
+        size_hint: 1,0.2
+        pos_hint: {"x":0,"top":0.25}
+        canvas.before:
+            Color:
+                rgba: 74/255, 74/255, 74/255,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        
+        Label:
+            text: "Static:"
+            size_hint: 0.475,1
+            pos_hint: {"x":0, "y":0}
+            font_size: 20
+        
+        Switch:
+            id: property_static_state_switch
+            size_hint: 0.2,1
+            pos_hint: {"x":0.55,"y":0}
